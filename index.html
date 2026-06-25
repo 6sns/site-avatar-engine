@@ -1,0 +1,2402 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Аватарки для чатов</title>
+  <style>
+    @font-face {
+      font-family: "Montserrat";
+      src: url("./assets/fonts/montserrat/Montserrat-Regular.ttf") format("truetype");
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "Montserrat";
+      src: url("./assets/fonts/montserrat/Montserrat-SemiBold.ttf") format("truetype");
+      font-weight: 600;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root {
+      --app-bg: #1b1b1d;
+      --panel: #232326;
+      --panel-2: #2a2a2e;
+      --line: #2e2e32;
+      --line-soft: #3a3a3f;
+      --muted: #8a8a90;
+      --soft: #5a5a60;
+      --text: #ffffff;
+      --accent: #f03238;
+      --canvas-dot: rgba(255, 255, 255, 0.04);
+      --zoom: 1;
+      --pan-x: 0px;
+      --pan-y: 0px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: var(--app-bg);
+      color: var(--text);
+      font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+      font-size: 13px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .topbar {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 10;
+      height: 51px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--line);
+      background: var(--app-bg);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 220px;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 28px;
+      border-radius: 2px;
+      background: var(--text);
+      color: #000;
+      font: 700 10px/1 inherit;
+      letter-spacing: 0.16em;
+    }
+
+    .brand-title,
+    .toolbar-label,
+    .card-label {
+      color: var(--soft);
+      font-family: inherit;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .brand-title {
+      color: var(--text);
+      font-size: 11px;
+      letter-spacing: 2px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+    }
+
+    .view-tab.is-active {
+      border-color: var(--text);
+      background: var(--text);
+      color: #000;
+      font-weight: 700;
+    }
+
+    .toolbar-label {
+      margin-right: 8px;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .btn {
+      min-height: 30px;
+      border: 1px solid var(--line-soft);
+      border-radius: 2px;
+      padding: 7px 12px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      border-color: var(--text);
+      background: transparent;
+      color: var(--text);
+    }
+
+    .btn-primary {
+      border-color: var(--text);
+      background: var(--text);
+      color: #000;
+      font-weight: 700;
+    }
+
+    .btn-primary:hover {
+      color: #000;
+      background: var(--text);
+    }
+
+    .btn.is-active {
+      border-color: var(--text);
+      background: var(--text);
+      color: #000;
+      font-weight: 700;
+    }
+
+    .shell {
+      position: fixed;
+      inset: 51px 0 0 0;
+      display: grid;
+      grid-template-columns: 280px 1fr 86px;
+      min-height: 0;
+    }
+
+    .workspace-view {
+      display: none;
+    }
+
+    .workspace-view.is-active {
+      display: grid;
+    }
+
+    .empty-view {
+      grid-template-columns: 1fr;
+      place-items: center;
+      color: var(--soft);
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .sidebar {
+      display: block;
+      min-height: 0;
+      overflow-y: auto;
+      scrollbar-width: none;
+      border-right: 1px solid var(--line);
+      background: var(--app-bg);
+    }
+
+    .sidebar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .cards-list {
+      display: grid;
+      gap: 2px;
+      padding: 24px 10px 16px 24px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .card-row {
+      width: 100%;
+      min-height: 34px;
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid transparent;
+      border-radius: 2px;
+      padding: 7px 0 7px 10px;
+      margin: 0 -10px 0 -10px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.2px;
+      text-align: left;
+    }
+
+    .card-row-actions {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-left: auto;
+      margin-right: -2px;
+    }
+
+    .row-marker {
+      width: 28px;
+      height: 20px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      color: var(--soft);
+      font-family: inherit;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .row-marker:hover {
+      color: var(--text);
+    }
+
+    .card-row.is-active {
+      border-color: transparent;
+      background: var(--panel);
+      color: var(--text);
+    }
+
+    .card-row.is-active .row-marker {
+      color: #fff;
+    }
+
+    .row-name {
+      min-width: 0;
+      border: 0;
+      outline: 0;
+      padding: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      letter-spacing: inherit;
+    }
+
+    .row-name:focus {
+      color: var(--text);
+    }
+
+    .row-name[readonly] {
+      cursor: default;
+    }
+
+    .edit-card,
+    .duplicate-card,
+    .delete-card {
+      width: 18px;
+      height: 18px;
+      display: grid;
+      place-items: center;
+      border: 1px solid transparent;
+      border-radius: 2px;
+      background: transparent;
+      color: var(--soft);
+      font: inherit;
+      font-size: 13px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .edit-card {
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    .edit-card:hover,
+    .duplicate-card:hover,
+    .delete-card:hover {
+      border-color: var(--line-soft);
+      color: var(--text);
+    }
+
+    .delete-card:disabled {
+      opacity: 0.28;
+      cursor: not-allowed;
+    }
+
+    .delete-card:disabled:hover {
+      border-color: transparent;
+      color: var(--soft);
+    }
+
+    .inspector {
+      padding: 18px 24px 20px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .field label,
+    .field-title {
+      color: #92929a;
+      font-family: inherit;
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .control {
+      width: 100%;
+      min-height: 36px;
+      border: 1px solid var(--line-soft);
+      border-radius: 2px;
+      padding: 0 11px;
+      background: transparent;
+      color: var(--text);
+      font-size: 12px;
+    }
+
+    .file-control {
+      min-height: 36px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--line-soft);
+      border-radius: 2px;
+      padding: 0 11px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .file-control:hover {
+      border-color: var(--muted);
+      color: var(--text);
+    }
+
+    .file-plus {
+      color: var(--soft);
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .file-title {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .file-name {
+      min-width: 0;
+      overflow: hidden;
+      max-width: 100%;
+      color: var(--soft);
+      font-size: 12px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .logo-preview {
+      width: 48px;
+      height: 48px;
+      display: none;
+      position: relative;
+      box-sizing: border-box;
+      overflow: hidden;
+      border: 1px solid var(--line-soft);
+      border-radius: 3px;
+      padding: 6px;
+      background: #101012;
+    }
+
+    .logo-preview.has-image {
+      display: block;
+    }
+
+    .logo-preview img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      object-position: center;
+    }
+
+    .logo-preview-remove {
+      position: absolute;
+      top: -7px;
+      right: -7px;
+      width: 18px;
+      height: 18px;
+      display: none;
+      place-items: center;
+      border: 1px solid var(--line-soft);
+      border-radius: 50%;
+      background: var(--app-bg);
+      color: var(--muted);
+      font: inherit;
+      font-size: 12px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .logo-preview.has-image .logo-preview-remove {
+      display: grid;
+    }
+
+    .logo-preview-remove:hover {
+      border-color: var(--text);
+      color: var(--text);
+    }
+
+    .fixed-logo-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 48px);
+      gap: 8px;
+    }
+
+    .fixed-logo-option {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line-soft);
+      border-radius: 3px;
+      overflow: hidden;
+      padding: 7px;
+      background: #111;
+      cursor: pointer;
+    }
+
+    .fixed-logo-option[data-tone="black"] {
+      background: #f1f1f1;
+    }
+
+    .fixed-logo-option:hover,
+    .fixed-logo-option.is-active {
+      border-color: var(--text);
+    }
+
+    .fixed-logo-option img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      object-position: center;
+      pointer-events: none;
+    }
+
+    .color-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 44px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .text-settings[hidden],
+    .field[hidden] {
+      display: none;
+    }
+
+    input[type="color"].color-input {
+      width: 44px;
+      height: 36px;
+      border: 1px solid var(--line-soft);
+      border-radius: 2px;
+      padding: 3px;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .canvas-shell {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      background-color: #161618;
+      background-image: radial-gradient(circle, var(--canvas-dot) 1px, transparent 1px);
+      background-size: 22px 22px;
+      cursor: grab;
+    }
+
+    .right-tools {
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      padding: 24px 12px;
+      border-left: 1px solid var(--line);
+      background: var(--app-bg);
+    }
+
+    .right-tools .btn {
+      width: 100%;
+      padding-right: 0;
+      padding-left: 0;
+      text-align: center;
+    }
+
+    .canvas-shell.is-panning {
+      cursor: grabbing;
+    }
+
+    .canvas-board {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 6000px;
+      height: 3200px;
+      transform: translate3d(var(--pan-x), var(--pan-y), 0) scale(var(--zoom));
+      transform-origin: top left;
+    }
+
+    .work-area {
+      position: absolute;
+      top: 40px;
+      left: 92px;
+      min-width: 5342px;
+      min-height: 2720px;
+    }
+
+    .builtin-row {
+      display: flex;
+      gap: 74px;
+      align-items: start;
+    }
+
+    .copy-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .avatar-frame-copy {
+      position: absolute;
+      pointer-events: auto;
+    }
+
+    .avatar-frame {
+      display: grid;
+      gap: 12px;
+    }
+
+    .card-label {
+      color: #72727a;
+      font-size: 26px;
+    }
+
+    .card-label[data-board-handle] {
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+    }
+
+    .card-label[data-board-handle].is-dragging {
+      cursor: grabbing;
+    }
+
+    .avatar-card {
+      position: relative;
+      width: 1280px;
+      height: 1280px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: #fff;
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.42);
+      cursor: pointer;
+    }
+
+    .avatar-card.template-library {
+      overflow: visible;
+    }
+
+    .avatar-card.show-grid::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.32) 0 0),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.32) 0 0),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.14) 0, rgba(255, 255, 255, 0.14) 1px, transparent 1px, transparent 40px),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.14) 0, rgba(255, 255, 255, 0.14) 1px, transparent 1px, transparent 40px);
+      background-size: 1px 100%, 100% 1px, 100% 100%, 100% 100%;
+      background-position: 50% 0, 0 50%, 0 0, 0 0;
+    }
+
+    .avatar-card.is-selected {
+      outline: 3px solid #3a8cff;
+      outline-offset: 8px;
+    }
+
+    .template-inner {
+      width: 1280px;
+      height: 1280px;
+      color: var(--accent);
+    }
+
+    .template-outer,
+    .template-resource,
+    .template-library,
+    .template-plain {
+      width: 1280px;
+      height: 1280px;
+      color: #fff;
+      background: var(--card-color, var(--accent));
+    }
+
+    .avatar-card.template-plain {
+      overflow: visible;
+    }
+
+    .inner-word {
+      position: absolute;
+      top: 287px;
+      left: 294px;
+      width: 706px;
+      height: 154px;
+      text-align: center;
+      color: currentColor;
+      font-family: "Montserrat", "Segoe UI", Arial, sans-serif;
+      font-size: 220px;
+      font-weight: 600;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .logo-slot,
+    .fixed-slot {
+      position: absolute;
+      overflow: visible;
+      cursor: pointer;
+    }
+
+    .fixed-slot {
+      z-index: 1;
+    }
+
+    .logo-slot {
+      z-index: 2;
+    }
+
+    .logo-viewport {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .logo-image {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transform-origin: center center;
+      pointer-events: none;
+    }
+
+    .logo-slot img,
+    .fixed-slot img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .slot-empty {
+      display: grid;
+      place-items: center;
+      width: 100%;
+      height: 100%;
+      border: 1px dashed rgba(150, 150, 155, 0.55);
+      color: rgba(130, 130, 136, 0.9);
+      font-family: "Courier New", monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .logo-handle {
+      position: absolute;
+      z-index: 4;
+      width: 34px;
+      height: 34px;
+      display: none;
+      place-items: center;
+      border: 2px solid rgba(220, 225, 237, 0.9);
+      border-radius: 50%;
+      background: #3f74f0;
+      color: #fff;
+      font-size: 15px;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+      user-select: none;
+      touch-action: none;
+    }
+
+    .logo-slot.is-editing .logo-handle,
+    .fixed-slot.is-editing .logo-handle {
+      display: grid;
+    }
+
+    .logo-handle-move {
+      top: -18px;
+      left: -18px;
+    }
+
+    .logo-handle-resize {
+      right: -18px;
+      bottom: -18px;
+    }
+
+    .template-inner .logo-slot {
+      top: 564px;
+      left: 499px;
+      width: 278px;
+      height: 273px;
+    }
+
+    .template-outer .logo-slot,
+    .template-resource .logo-slot {
+      top: 236px;
+      left: 495px;
+      width: 286px;
+      height: 281px;
+    }
+
+    .template-library .logo-slot[data-slot-kind="logo"] {
+      top: 500px;
+      left: 520px;
+      width: 280px;
+      height: 220px;
+      z-index: 2;
+      overflow: visible;
+    }
+
+    .template-library .logo-slot[data-slot-kind="logo"] .logo-viewport {
+      overflow: visible;
+      border-radius: 0;
+      clip-path: none;
+    }
+
+    .template-library .logo-slot[data-slot-kind="logo"] .logo-image {
+      border-radius: 0;
+      clip-path: none;
+    }
+
+    .template-library .logo-slot[data-slot-kind="logo"].is-editing .logo-viewport {
+      outline: 1px dashed rgba(120, 160, 255, 0.9);
+      outline-offset: -1px;
+    }
+
+    .template-library .logo-slot[data-slot-kind="logo"].is-editing .logo-handle,
+    .template-plain .logo-slot.is-editing .logo-handle {
+      z-index: 6;
+    }
+
+    .template-plain .logo-slot {
+      top: 440px;
+      left: 440px;
+      width: 400px;
+      height: 400px;
+      z-index: 2;
+      overflow: visible;
+    }
+
+    .template-plain .logo-slot .logo-viewport {
+      overflow: visible;
+      border-radius: 0;
+      clip-path: none;
+    }
+
+    .template-plain .logo-slot.is-editing .logo-viewport {
+      outline: 1px dashed rgba(120, 160, 255, 0.9);
+      outline-offset: -1px;
+    }
+
+    .template-library .fixed-slot[data-slot-kind="group2"] {
+      top: 440px;
+      left: 440px;
+      width: 400px;
+      height: 400px;
+      pointer-events: none;
+    }
+
+    .fixed-slot {
+      color: #fff;
+    }
+
+    .fixed-note {
+      position: absolute;
+      right: 16px;
+      bottom: 14px;
+      color: rgba(255, 255, 255, 0.56);
+      font-family: "Courier New", monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .template-inner .fixed-note {
+      color: rgba(240, 50, 56, 0.52);
+    }
+
+    .zoom-controls {
+      position: fixed;
+      right: 24px;
+      bottom: 22px;
+      z-index: 12;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px;
+      border: 1px solid #34343a;
+      border-radius: 8px;
+      background: rgba(18, 18, 20, 0.94);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.36);
+    }
+
+    .zoom-controls .btn {
+      min-width: 36px;
+      padding: 0 9px;
+    }
+
+    .zoom-value {
+      min-width: 54px;
+      color: #c7c7cc;
+      font-family: "Courier New", monospace;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    @media (max-width: 980px) {
+      .shell {
+        grid-template-columns: 300px 1fr;
+      }
+
+      .work-area {
+        grid-template-columns: 480px;
+      }
+
+      .brand {
+        min-width: 210px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">6SNS</div>
+      <div class="brand-title">Constructor</div>
+    </div>
+    <div class="toolbar">
+      <button class="btn view-tab is-active" type="button" data-view-tab="avatar">Аватарка</button>
+      <button class="btn view-tab" type="button" data-view-tab="resource">Ресурс</button>
+    </div>
+  </header>
+
+  <main class="shell workspace-view is-active" data-view="avatar">
+    <aside class="sidebar">
+      <nav class="cards-list" id="cardsList" aria-label="Карточки"></nav>
+
+      <section class="inspector">
+        <div class="field">
+          <label for="hexInput">Цвет карточки</label>
+          <div class="color-row">
+            <input class="control" id="hexInput" type="text" spellcheck="false">
+            <input class="color-input" id="colorInput" type="color" aria-label="Выбрать цвет карточки">
+          </div>
+        </div>
+
+        <div class="field text-settings" id="textSettings">
+          <label for="innerTextValue">Текст</label>
+          <input class="control" id="innerTextValue" type="text" value="INNER" readonly>
+          <div class="color-row">
+            <input class="control" id="textHexInput" type="text" spellcheck="false" aria-label="Цвет текста">
+            <input class="color-input" id="textColorInput" type="color" aria-label="Выбрать цвет текста">
+          </div>
+        </div>
+
+        <div class="field" id="logoFileField">
+          <div class="field-title" id="logoFileFieldTitle">Файл лого</div>
+      <label class="file-control">
+        <span class="file-plus">+</span>
+        <span class="file-title">Прикрепить файл <span class="file-name" id="fileName">не выбран</span></span>
+        <input id="logoInput" type="file" accept="image/*" hidden>
+      </label>
+          <div class="logo-preview" id="logoPreview" aria-label="Прикрепленное лого">
+            <button class="logo-preview-remove" type="button" id="removeLogoBtn" aria-label="Удалить лого">×</button>
+          </div>
+        </div>
+
+        <div class="field" id="sixsnsLogoField">
+          <div class="field-title">Лого 6Sns</div>
+          <div class="fixed-logo-grid" id="sixsnsLogoGrid"></div>
+        </div>
+
+        <div class="field" id="resourceLogoField">
+          <div class="field-title">Лого Resource</div>
+          <div class="fixed-logo-grid" id="resourceLogoGrid"></div>
+        </div>
+
+      </section>
+    </aside>
+
+    <section class="canvas-shell" id="canvasShell" aria-label="Canvas">
+      <div class="canvas-board" id="canvasBoard">
+        <div class="work-area" id="workArea"></div>
+      </div>
+    </section>
+
+    <aside class="right-tools" data-view-tools="avatar" aria-label="Инструменты аватарки">
+      <button class="btn" type="button" id="saveStateBtn">saved</button>
+      <button class="btn" type="button" id="gridToggleBtn">Grid</button>
+      <button class="btn" type="button" id="fitBtn">Fit</button>
+      <button class="btn" type="button" id="pngBtn">PNG</button>
+    </aside>
+  </main>
+
+  <main class="shell workspace-view empty-view" data-view="resource">
+    <div>Ресурс · рабочая область</div>
+  </main>
+
+  <div class="zoom-controls" aria-label="Масштаб">
+    <button class="btn" type="button" id="zoomOut">−</button>
+    <output class="zoom-value" id="zoomValue">100%</output>
+    <button class="btn" type="button" id="zoomIn">+</button>
+  </div>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var selected = "card-inner-1";
+      var zoom = 1;
+      var panX = 0;
+      var panY = 0;
+      var panState = null;
+      var slotEditState = null;
+      var boardDragState = null;
+      var activeSlotEdit = null;
+      var BOARD_CARD_WIDTH = 1280;
+      var BOARD_CARD_GAP = 74;
+      var BOARD_ROW_HEIGHT = 1318;
+      var BOARD_COPY_ROW_Y = BOARD_ROW_HEIGHT + BOARD_CARD_GAP;
+      var savedStateHash = "";
+      var gridEnabled = false;
+      var STORAGE_KEY = "avatar-engine-inline-state-v1";
+      var BUILTIN_CARD_IDS = ["card-inner-1", "card-outer-1", "card-resource-1", "card-library-1", "card-plain-1"];
+      var cardCounter = 5;
+      var avatarGeometry = {
+        inner: {
+          size: { width: 1280, height: 1280 },
+          logoSlot: { x: 499, y: 564, w: 278, h: 273 },
+          textDraw: { x: 640, y: 287, font: "600 220px \"Montserrat\", Segoe UI, Arial, sans-serif" }
+        },
+        outer: {
+          size: { width: 1280, height: 1280 },
+          logoSlot: { x: 495, y: 236, w: 286, h: 281 },
+          sixsnsSlot: { x: 430, y: 810, w: 420, h: 253 }
+        },
+        resource: {
+          size: { width: 1280, height: 1280 },
+          logoSlot: { x: 495, y: 236, w: 286, h: 281 },
+          resourceSlot: { x: 430, y: 810, w: 420, h: 253 }
+        },
+        library: {
+          size: { width: 1280, height: 1280 },
+          group2Slot: { x: 440, y: 440, w: 400, h: 400 },
+          logoSlot: { x: 520, y: 500, w: 280, h: 220 }
+        },
+        plain: {
+          size: { width: 1280, height: 1280 },
+          logoSlot: { x: 440, y: 440, w: 400, h: 400 }
+        }
+      };
+      var GROUP2_LOGO_SRC = "./assets/fixed/group-2.png";
+      var sixsnsLogos = [
+        { id: "primary-white", label: "Основной белый", src: "./assets/fixed/6sns-primary-white.svg", tone: "white" },
+        { id: "primary-black", label: "Основной черный", src: "./assets/fixed/6sns-primary-black.svg", tone: "black" },
+        { id: "mark-white", label: "Знак белый", src: "./assets/fixed/6sns-mark-white.svg", tone: "white" },
+        { id: "mark-black", label: "Знак черный", src: "./assets/fixed/6sns-mark-black.svg", tone: "black" },
+        { id: "word-white", label: "Шрифтовой белый", src: "./assets/fixed/6sns-word-white.svg", tone: "white" },
+        { id: "word-black", label: "Шрифтовой черный", src: "./assets/fixed/6sns-word-black.svg", tone: "black" }
+      ];
+      var resourceLogos = [
+        { id: "resource", label: "RE", src: "./assets/fixed/resource.svg", tone: "black" }
+      ];
+      var cards = {
+        "card-inner-1": {
+          id: "card-inner-1",
+          type: "inner",
+          name: "Inner",
+          title: "Inner",
+          template: "INNER + logo",
+          color: "#ffffff",
+          textColor: "#f03238",
+          fileName: "не выбран",
+          image: "",
+          logoSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          sixsnsSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          resourceSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          sixsnsLogo: "primary-white",
+          resourceLogo: "resource",
+          metrics: {}
+        },
+        "card-outer-1": {
+          id: "card-outer-1",
+          type: "outer",
+          name: "6Sns",
+          title: "6Sns",
+          template: "logo + 6SNS",
+          color: "#f03238",
+          textColor: "#ffffff",
+          fileName: "не выбран",
+          image: "",
+          logoSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          sixsnsSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          resourceSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          sixsnsLogo: "primary-white",
+          resourceLogo: "resource",
+          metrics: {}
+        },
+        "card-resource-1": {
+          id: "card-resource-1",
+          type: "resource",
+          name: "Resource",
+          title: "Resource",
+          template: "logo + Resource",
+          color: "#f03238",
+          textColor: "#ffffff",
+          fileName: "не выбран",
+          image: "",
+          logoSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          sixsnsSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          resourceSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          sixsnsLogo: "primary-white",
+          resourceLogo: "resource",
+          metrics: {}
+        },
+        "card-library-1": {
+          id: "card-library-1",
+          type: "library",
+          name: "Лого/картинка",
+          title: "Лого/картинка",
+          template: "logo",
+          color: "#ff9500",
+          textColor: "#ffffff",
+          fileName: "не выбран",
+          image: "",
+          logoSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          sixsnsSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          resourceSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          sixsnsLogo: "primary-white",
+          resourceLogo: "resource",
+          metrics: {}
+        },
+        "card-plain-1": {
+          id: "card-plain-1",
+          type: "plain",
+          name: "Лого_центр",
+          title: "Лого_центр",
+          template: "logo",
+          color: "#ffffff",
+          textColor: "#ffffff",
+          fileName: "не выбран",
+          image: "",
+          logoSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          sixsnsSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          resourceSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          sixsnsLogo: "primary-white",
+          resourceLogo: "resource",
+          metrics: {}
+        }
+      };
+      var cardOrder = ["card-inner-1", "card-outer-1", "card-resource-1", "card-library-1", "card-plain-1"];
+      var viewTabs = Array.from(document.querySelectorAll("[data-view-tab]"));
+      var workspaceViews = Array.from(document.querySelectorAll("[data-view]"));
+      var cardsList = document.getElementById("cardsList");
+      var workArea = document.getElementById("workArea");
+      var hexInput = document.getElementById("hexInput");
+      var colorInput = document.getElementById("colorInput");
+      var textSettings = document.getElementById("textSettings");
+      var textHexInput = document.getElementById("textHexInput");
+      var textColorInput = document.getElementById("textColorInput");
+      var logoInput = document.getElementById("logoInput");
+      var fileName = document.getElementById("fileName");
+      var logoPreview = document.getElementById("logoPreview");
+      var logoFileField = document.getElementById("logoFileField");
+      var logoFileFieldTitle = document.getElementById("logoFileFieldTitle");
+      var sixsnsLogoField = document.getElementById("sixsnsLogoField");
+      var resourceLogoField = document.getElementById("resourceLogoField");
+      var sixsnsLogoGrid = document.getElementById("sixsnsLogoGrid");
+      var resourceLogoGrid = document.getElementById("resourceLogoGrid");
+      var removeLogoBtn = document.getElementById("removeLogoBtn");
+      var pngBtn = document.getElementById("pngBtn");
+      var saveStateBtn = document.getElementById("saveStateBtn");
+      var gridToggleBtn = document.getElementById("gridToggleBtn");
+      var canvasShell = document.getElementById("canvasShell");
+      var canvasBoard = document.getElementById("canvasBoard");
+      var zoomValue = document.getElementById("zoomValue");
+
+      function normalizeHex(value, fallback) {
+        var next = String(value || "").trim();
+        if (next.charAt(0) !== "#") next = "#" + next;
+        if (/^#[0-9a-fA-F]{3}$/.test(next)) {
+          next = "#" + next.slice(1).split("").map(function (char) {
+            return char + char;
+          }).join("");
+        }
+        return /^#[0-9a-fA-F]{6}$/.test(next) ? next.toUpperCase() : fallback;
+      }
+
+      function isHexColor(value) {
+        var next = String(value || "").trim();
+        if (next.charAt(0) !== "#") next = "#" + next;
+        return /^#[0-9a-fA-F]{3}$/.test(next) || /^#[0-9a-fA-F]{6}$/.test(next);
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function getIndexLabel(index) {
+        return String(index + 1).padStart(2, "0");
+      }
+
+      function getSixsnsLogo(id) {
+        return sixsnsLogos.find(function (logo) {
+          return logo.id === id;
+        }) || sixsnsLogos[0];
+      }
+
+      function getResourceLogo(id) {
+        return resourceLogos.find(function (logo) {
+          return logo.id === id;
+        }) || resourceLogos[0];
+      }
+
+      function getDefaultCardColor(type) {
+        if (type === "inner" || type === "plain") return "#FFFFFF";
+        if (type === "library") return "#FF9500";
+        return "#F03238";
+      }
+
+      function isBuiltinCard(cardId) {
+        return BUILTIN_CARD_IDS.indexOf(cardId) >= 0;
+      }
+
+      function getCopyCardIds() {
+        return cardOrder.filter(function (cardId) {
+          return cards[cardId] && !isBuiltinCard(cardId);
+        });
+      }
+
+      function getDefaultCopyBoardPosition(forCardId) {
+        var copies = getCopyCardIds();
+        var index = forCardId ? copies.indexOf(forCardId) : copies.length;
+        if (index < 0) index = copies.length;
+        return {
+          x: index * (BOARD_CARD_WIDTH + BOARD_CARD_GAP),
+          y: BOARD_COPY_ROW_Y
+        };
+      }
+
+      function ensureCopyBoardPosition(card) {
+        if (!card || isBuiltinCard(card.id)) return;
+        if (!Number.isFinite(card.boardX) || !Number.isFinite(card.boardY)) {
+          var pos = getDefaultCopyBoardPosition(card.id);
+          card.boardX = pos.x;
+          card.boardY = pos.y;
+        }
+      }
+
+      function applyBoardPosition(cardId) {
+        var card = cards[cardId];
+        if (!card || isBuiltinCard(cardId)) return;
+        var frame = workArea.querySelector("[data-board-frame=\"" + cardId + "\"]");
+        if (!frame) return;
+        frame.style.left = Math.round(card.boardX) + "px";
+        frame.style.top = Math.round(card.boardY) + "px";
+      }
+
+      function updateWorkAreaSize() {
+        var maxX = BUILTIN_CARD_IDS.length * BOARD_CARD_WIDTH + (BUILTIN_CARD_IDS.length - 1) * BOARD_CARD_GAP;
+        var maxY = BOARD_COPY_ROW_Y + BOARD_ROW_HEIGHT;
+        getCopyCardIds().forEach(function (cardId) {
+          var card = cards[cardId];
+          maxX = Math.max(maxX, (card.boardX || 0) + BOARD_CARD_WIDTH);
+          maxY = Math.max(maxY, (card.boardY || 0) + BOARD_ROW_HEIGHT);
+        });
+        workArea.style.width = Math.max(maxX + 120, 5342) + "px";
+        workArea.style.minHeight = Math.max(maxY + 120, 2720) + "px";
+      }
+
+      function renderSidebar() {
+        cardsList.innerHTML = cardOrder.map(function (cardId, index) {
+          var card = cards[cardId];
+          var deleteBtn = "";
+          if (!isBuiltinCard(cardId)) {
+            deleteBtn = "<button class=\"delete-card\" type=\"button\" data-delete-card=\"" + cardId + "\" aria-label=\"Удалить карточку\" title=\"Удалить\">−</button>";
+          }
+          return [
+            "<div class=\"card-row" + (cardId === selected ? " is-active" : "") + "\" data-card=\"" + cardId + "\">",
+              "<button class=\"row-marker\" type=\"button\" data-select-card=\"" + cardId + "\" aria-label=\"Выбрать карточку " + getIndexLabel(index) + "\">" + getIndexLabel(index) + "</button>",
+              "<input class=\"row-name\" data-card-name=\"" + cardId + "\" value=\"" + escapeHtml(card.name) + "\" aria-label=\"Название карточки\" readonly>",
+              "<div class=\"card-row-actions\">",
+                "<button class=\"edit-card\" type=\"button\" data-edit-card=\"" + cardId + "\" aria-label=\"Изменить название карточки\" title=\"Изменить название\">✎</button>",
+                "<button class=\"duplicate-card\" type=\"button\" data-duplicate-card=\"" + cardId + "\" aria-label=\"Дублировать карточку\" title=\"Дублировать\">+</button>",
+                deleteBtn,
+              "</div>",
+            "</div>"
+          ].join("");
+        }).join("");
+      }
+
+      function getDefaultCardName(type) {
+        if (type === "inner") return "Новая_внутренняя";
+        if (type === "resource") return "Новая_ресурс";
+        if (type === "library") return "Новая_библиотека";
+        if (type === "plain") return "Новая_центр";
+        return "Новая_внешняя";
+      }
+
+      function createCardHtml(card) {
+        var body = "";
+        if (card.type === "inner") {
+          body = [
+            "<div class=\"inner-word\">INNER</div>",
+            "<div class=\"logo-slot\" data-slot=\"" + card.id + "\" data-slot-kind=\"logo\"></div>",
+            "<div class=\"fixed-note\">fixed: inner</div>"
+          ].join("");
+        } else if (card.type === "resource") {
+          body = [
+            "<div class=\"logo-slot\" data-slot=\"" + card.id + "\" data-slot-kind=\"logo\"></div>",
+            "<div class=\"fixed-slot\" data-slot=\"" + card.id + "\" data-slot-kind=\"resource\" aria-label=\"Resource\"></div>",
+            "<div class=\"fixed-note\">fixed: Resource</div>"
+          ].join("");
+        } else if (card.type === "library") {
+          body = [
+            "<div class=\"fixed-slot\" data-slot=\"" + card.id + "\" data-slot-kind=\"group2\" aria-label=\"Group 2\"></div>",
+            "<div class=\"logo-slot\" data-slot=\"" + card.id + "\" data-slot-kind=\"logo\"></div>"
+          ].join("");
+        } else if (card.type === "plain") {
+          body = [
+            "<div class=\"logo-slot\" data-slot=\"" + card.id + "\" data-slot-kind=\"logo\"></div>"
+          ].join("");
+        } else if (card.type === "outer") {
+          body = [
+            "<div class=\"logo-slot\" data-slot=\"" + card.id + "\" data-slot-kind=\"logo\"></div>",
+            "<div class=\"fixed-slot\" data-slot=\"" + card.id + "\" data-slot-kind=\"sixsns\" aria-label=\"6SNS\"></div>",
+            "<div class=\"fixed-note\">fixed: 6SNS</div>"
+          ].join("");
+        }
+        return [
+          "<figure class=\"avatar-frame" + (isBuiltinCard(card.id) ? "" : " avatar-frame-copy") + "\" data-board-frame=\"" + card.id + "\">",
+            "<figcaption class=\"card-label\" data-card-label=\"" + card.id + "\"" + (isBuiltinCard(card.id) ? "" : " data-board-handle=\"" + card.id + "\"") + ">" + escapeHtml(card.name) + "</figcaption>",
+            "<div class=\"avatar-card template-" + card.type + (card.id === selected ? " is-selected" : "") + "\" data-card=\"" + card.id + "\">",
+              body,
+            "</div>",
+          "</figure>"
+        ].join("");
+      }
+
+      function renderCanvas() {
+        var builtinHtml = BUILTIN_CARD_IDS.filter(function (cardId) {
+          return cards[cardId];
+        }).map(function (cardId) {
+          return createCardHtml(cards[cardId]);
+        }).join("");
+        var copyHtml = getCopyCardIds().map(function (cardId) {
+          ensureCopyBoardPosition(cards[cardId]);
+          return createCardHtml(cards[cardId]);
+        }).join("");
+        workArea.innerHTML = [
+          "<div class=\"builtin-row\">" + builtinHtml + "</div>",
+          "<div class=\"copy-layer\">" + copyHtml + "</div>"
+        ].join("");
+        getCopyCardIds().forEach(applyBoardPosition);
+        updateWorkAreaSize();
+        renderCards();
+      }
+
+      function renderSixsnsLogoGrid() {
+        var current = cards[selected] && cards[selected].sixsnsLogo;
+        sixsnsLogoGrid.innerHTML = sixsnsLogos.map(function (logo) {
+          return [
+            "<button class=\"fixed-logo-option" + (logo.id === current ? " is-active" : "") + "\" type=\"button\" data-sixsns-logo=\"" + logo.id + "\" data-tone=\"" + logo.tone + "\" title=\"" + escapeHtml(logo.label) + "\">",
+              "<img src=\"" + logo.src + "\" alt=\"" + escapeHtml(logo.label) + "\">",
+            "</button>"
+          ].join("");
+        }).join("");
+      }
+
+      function renderResourceLogoGrid() {
+        var current = cards[selected] && cards[selected].resourceLogo;
+        resourceLogoGrid.innerHTML = resourceLogos.map(function (logo) {
+          return [
+            "<button class=\"fixed-logo-option" + (logo.id === current ? " is-active" : "") + "\" type=\"button\" data-resource-logo=\"" + logo.id + "\" data-tone=\"" + logo.tone + "\" title=\"" + escapeHtml(logo.label) + "\">",
+              "<img src=\"" + logo.src + "\" alt=\"" + escapeHtml(logo.label) + "\">",
+            "</button>"
+          ].join("");
+        }).join("");
+      }
+
+      function renderLogoPreview() {
+        var card = cards[selected];
+        logoPreview.innerHTML = "";
+        logoPreview.appendChild(removeLogoBtn);
+        logoPreview.classList.toggle("has-image", !!(card && card.image));
+        if (!card || !card.image) return;
+        var image = document.createElement("img");
+        image.src = card.image;
+        image.alt = card.fileName || "logo";
+        logoPreview.insertBefore(image, removeLogoBtn);
+      }
+
+      function isSlotEditing(cardId, kind) {
+        return activeSlotEdit && activeSlotEdit.cardId === cardId && activeSlotEdit.kind === kind;
+      }
+
+      function clearActiveSlotEdit() {
+        activeSlotEdit = null;
+      }
+
+      function appendSlotHandles(slot) {
+        slot.insertAdjacentHTML("beforeend",
+          "<button class=\"logo-handle logo-handle-move\" type=\"button\" data-logo-handle=\"move\" aria-label=\"Переместить слот\">✥</button>" +
+          "<button class=\"logo-handle logo-handle-resize\" type=\"button\" data-logo-handle=\"resize\" aria-label=\"Изменить размер слота\">↘</button>"
+        );
+      }
+
+      function getBaseSlot(card, kind) {
+        if (kind === "logo") return avatarGeometry[card.type].logoSlot;
+        if (kind === "group2") return avatarGeometry.library.group2Slot;
+        if (kind === "sixsns") return avatarGeometry.outer.sixsnsSlot;
+        if (kind === "resource") return avatarGeometry.resource.resourceSlot;
+        return null;
+      }
+
+      function ensureSlotAdjust(card, kind) {
+        if (kind === "logo") {
+          if (!card.logoSlotAdjust) card.logoSlotAdjust = { x: 0, y: 0, w: 0, h: 0 };
+          return card.logoSlotAdjust;
+        }
+        if (kind === "sixsns") {
+          if (!card.sixsnsSlotAdjust) card.sixsnsSlotAdjust = { x: 0, y: 0, w: 0, h: 0 };
+          return card.sixsnsSlotAdjust;
+        }
+        if (kind === "resource") {
+          if (!card.resourceSlotAdjust) card.resourceSlotAdjust = { x: 0, y: 0, w: 0, h: 0 };
+          return card.resourceSlotAdjust;
+        }
+        return { x: 0, y: 0, w: 0, h: 0 };
+      }
+
+      function clampSlotRect(card, rect) {
+        var geometry = avatarGeometry[card.type];
+        var minSize = 80;
+        var width = Math.max(minSize, rect.w);
+        var height = Math.max(minSize, rect.h);
+        var maxX = geometry.size.width - width;
+        var maxY = geometry.size.height - height;
+        var x = Math.min(Math.max(0, rect.x), maxX);
+        var y = Math.min(Math.max(0, rect.y), maxY);
+        return { x: x, y: y, w: width, h: height };
+      }
+
+      function getSlotRect(card, kind) {
+        var base = getBaseSlot(card, kind);
+        if (!base) return { x: 0, y: 0, w: 0, h: 0 };
+        var adjust = ensureSlotAdjust(card, kind);
+        return clampSlotRect(card, {
+          x: base.x + adjust.x,
+          y: base.y + adjust.y,
+          w: base.w + adjust.w,
+          h: base.h + adjust.h
+        });
+      }
+
+      function setSlotRect(card, kind, rect) {
+        var base = getBaseSlot(card, kind);
+        if (!base) return;
+        var clamped = clampSlotRect(card, rect);
+        var adjust = ensureSlotAdjust(card, kind);
+        adjust.x = clamped.x - base.x;
+        adjust.y = clamped.y - base.y;
+        adjust.w = clamped.w - base.w;
+        adjust.h = clamped.h - base.h;
+      }
+
+      function getLogoSlotRect(card) {
+        return getSlotRect(card, "logo");
+      }
+
+      function setLogoSlotRect(card, rect) {
+        setSlotRect(card, "logo", rect);
+      }
+
+      function renderSlot(cardId, kind) {
+        if (kind === "logo") renderLogo(cardId);
+        else renderFixedSlot(cardId, kind);
+      }
+
+      function renderFixedSlot(cardId, kind) {
+        var card = cards[cardId];
+        var slot = document.querySelector(".fixed-slot[data-slot=\"" + cardId + "\"][data-slot-kind=\"" + kind + "\"]");
+        if (!slot || !card) return;
+        var slotRect = kind === "group2" ? avatarGeometry.library.group2Slot : getSlotRect(card, kind);
+        slot.style.left = slotRect.x + "px";
+        slot.style.top = slotRect.y + "px";
+        slot.style.width = slotRect.w + "px";
+        slot.style.height = slotRect.h + "px";
+        slot.innerHTML = "";
+        slot.classList.remove("is-editing");
+        var viewport = document.createElement("div");
+        viewport.className = "logo-viewport";
+        slot.appendChild(viewport);
+        var image = document.createElement("img");
+        image.className = "logo-image";
+        if (kind === "sixsns") {
+          var sixsns = getSixsnsLogo(card.sixsnsLogo);
+          image.src = sixsns.src;
+          image.alt = "6SNS";
+        } else if (kind === "resource") {
+          var resourceLogo = getResourceLogo(card.resourceLogo);
+          image.src = resourceLogo.src;
+          image.alt = "Resource";
+        } else if (kind === "group2") {
+          image.src = GROUP2_LOGO_SRC;
+          image.alt = "Group 2";
+        }
+        viewport.appendChild(image);
+        if (kind !== "group2" && isSlotEditing(cardId, kind)) {
+          slot.classList.add("is-editing");
+          appendSlotHandles(slot);
+        }
+      }
+
+      function ensureLogoSlotAdjust(card) {
+        return ensureSlotAdjust(card, "logo");
+      }
+
+      function clampLogoSlotRect(card, rect) {
+        return clampSlotRect(card, rect);
+      }
+
+      function shouldShowLogoHandles(cardId, card) {
+        if (!card || !card.image) return false;
+        if (isSlotEditing(cardId, "logo")) return true;
+        if (cardId === selected && (card.type === "library" || card.type === "plain")) return true;
+        return false;
+      }
+
+      function renderLogo(cardId) {
+        var card = cards[cardId];
+        var slot = document.querySelector(".logo-slot[data-slot=\"" + cardId + "\"][data-slot-kind=\"logo\"]");
+        if (!slot) {
+          slot = document.querySelector(".logo-slot[data-slot=\"" + cardId + "\"]:not([data-slot-kind])");
+        }
+        if (!slot) return;
+        var slotRect = getLogoSlotRect(card);
+        slot.style.left = slotRect.x + "px";
+        slot.style.top = slotRect.y + "px";
+        slot.style.width = slotRect.w + "px";
+        slot.style.height = slotRect.h + "px";
+        slot.innerHTML = "";
+        slot.classList.remove("is-editing");
+        var viewport = document.createElement("div");
+        viewport.className = "logo-viewport";
+        slot.appendChild(viewport);
+        if (card.image) {
+          var image = document.createElement("img");
+          image.className = "logo-image";
+          image.src = card.image;
+          image.alt = card.fileName || "logo";
+          viewport.appendChild(image);
+          if (shouldShowLogoHandles(cardId, card)) {
+            slot.classList.add("is-editing");
+            appendSlotHandles(slot);
+          }
+        } else if (card.type !== "library") {
+          var empty = document.createElement("span");
+          empty.className = "slot-empty";
+          empty.textContent = "logo area";
+          viewport.appendChild(empty);
+        }
+      }
+
+      function renderCards() {
+        Array.from(document.querySelectorAll(".avatar-card")).forEach(function (node) {
+          var cardId = node.dataset.card;
+          var card = cards[cardId];
+          if (!card) return;
+          node.classList.toggle("is-selected", cardId === selected);
+          node.classList.toggle("show-grid", gridEnabled);
+          if (card.type === "outer" || card.type === "resource" || card.type === "library" || card.type === "plain") {
+            node.style.setProperty("--card-color", card.color);
+          }
+          if (card.type === "inner") {
+            node.style.background = card.color;
+            node.style.color = card.textColor || card.color;
+          }
+          if (card.type === "library") {
+            renderFixedSlot(cardId, "group2");
+            renderLogo(cardId);
+          } else {
+            renderLogo(cardId);
+          }
+          if (card.type === "outer") renderFixedSlot(cardId, "sixsns");
+          if (card.type === "resource") renderFixedSlot(cardId, "resource");
+        });
+      }
+
+      function renderInspector() {
+        var card = cards[selected];
+        hexInput.value = card.color;
+        colorInput.value = card.color;
+        textSettings.hidden = card.type !== "inner";
+        sixsnsLogoField.hidden = card.type !== "outer";
+        resourceLogoField.hidden = true;
+        if (logoFileFieldTitle) {
+          logoFileFieldTitle.textContent = card.type === "library"
+            ? "Лого в центр (подгон вручную)"
+            : card.type === "plain"
+              ? "Лого в центр"
+              : "Файл лого";
+        }
+        textHexInput.value = card.textColor || card.color;
+        textColorInput.value = card.textColor || card.color;
+        fileName.textContent = card.fileName;
+        renderLogoPreview();
+        if (card.type === "outer") renderSixsnsLogoGrid();
+        renderSidebar();
+      }
+
+      function selectCard(cardId) {
+        if (!cards[cardId]) return;
+        selected = cardId;
+        if (activeSlotEdit && activeSlotEdit.cardId !== cardId) clearActiveSlotEdit();
+        var card = cards[cardId];
+        if (card && card.image && (card.type === "library" || card.type === "plain")) {
+          activeSlotEdit = { cardId: cardId, kind: "logo" };
+        }
+        renderInspector();
+        renderCards();
+      }
+
+      function beginCardNameEdit(cardId) {
+        if (!cards[cardId]) return;
+        selected = cardId;
+        if (activeSlotEdit && activeSlotEdit.cardId !== cardId) clearActiveSlotEdit();
+        renderInspector();
+        renderCards();
+        var input = cardsList.querySelector(".row-name[data-card-name=\"" + cardId + "\"]");
+        if (!input) return;
+        input.readOnly = false;
+        input.focus();
+        input.select();
+      }
+
+      function commitCardName(cardId, value) {
+        var card = cards[cardId];
+        if (!card) return;
+        var next = String(value || "").trim();
+        if (!next) next = getDefaultCardName(card.type);
+        if (card.name === next) return;
+        card.name = next;
+        renderSidebar();
+        renderCanvas();
+        markDirty();
+      }
+
+      function duplicateCard(cardId) {
+        var source = cards[cardId];
+        if (!source) return;
+        cardCounter += 1;
+        var copyId = source.type + "-copy-" + cardCounter;
+        var copy = JSON.parse(JSON.stringify(source));
+        copy.id = copyId;
+        copy.name = source.name + "_copy";
+        var boardPos = getDefaultCopyBoardPosition();
+        copy.boardX = boardPos.x;
+        copy.boardY = boardPos.y;
+        cards[copyId] = copy;
+        var sourceIndex = cardOrder.indexOf(cardId);
+        cardOrder.splice(sourceIndex + 1, 0, copyId);
+        selected = copyId;
+        renderInspector();
+        renderCanvas();
+        markDirty();
+      }
+
+      function deleteCard(cardId) {
+        if (!cards[cardId] || isBuiltinCard(cardId)) return;
+        var index = cardOrder.indexOf(cardId);
+        if (index < 0) return;
+        cardOrder.splice(index, 1);
+        delete cards[cardId];
+        if (selected === cardId) {
+          selected = cardOrder[Math.min(index, cardOrder.length - 1)];
+        }
+        renderInspector();
+        renderCanvas();
+        markDirty();
+      }
+
+      function setColor(value) {
+        var next = normalizeHex(value, cards[selected].color);
+        if (cards[selected].color === next) return;
+        cards[selected].color = next;
+        hexInput.value = next;
+        colorInput.value = next;
+        renderCards();
+        markDirty();
+      }
+
+      function setTextColor(value) {
+        if (!cards[selected] || cards[selected].type !== "inner") return;
+        var next = normalizeHex(value, cards[selected].textColor || cards[selected].color);
+        if ((cards[selected].textColor || cards[selected].color) === next) return;
+        cards[selected].textColor = next;
+        textHexInput.value = next;
+        textColorInput.value = next;
+        renderCards();
+        markDirty();
+      }
+
+      function setSixsnsLogo(logoId) {
+        if (!cards[selected] || cards[selected].type !== "outer" || !getSixsnsLogo(logoId)) return;
+        if (cards[selected].sixsnsLogo === logoId) return;
+        cards[selected].sixsnsLogo = logoId;
+        renderSixsnsLogoGrid();
+        renderCanvas();
+        markDirty();
+      }
+
+      function setResourceLogo(logoId) {
+        if (!cards[selected] || cards[selected].type !== "inner" || !getResourceLogo(logoId)) return;
+        if (cards[selected].resourceLogo === logoId) return;
+        cards[selected].resourceLogo = logoId;
+        renderResourceLogoGrid();
+        markDirty();
+      }
+
+      function loadImage(src) {
+        return new Promise(function (resolve, reject) {
+          var image = new Image();
+          image.onload = function () { resolve(image); };
+          image.onerror = reject;
+          image.src = src;
+        });
+      }
+
+      function drawContain(ctx, image, slot) {
+        var ratio = Math.min(slot.w / image.naturalWidth, slot.h / image.naturalHeight);
+        var width = image.naturalWidth * ratio;
+        var height = image.naturalHeight * ratio;
+        var x = slot.x + (slot.w - width) / 2;
+        var y = slot.y + (slot.h - height) / 2;
+        ctx.drawImage(image, x, y, width, height);
+      }
+
+      function ensureMontserratLoaded() {
+        if (!document.fonts || !document.fonts.load) return Promise.resolve();
+        return document.fonts.load("600 220px Montserrat").catch(function () {
+          return undefined;
+        });
+      }
+
+      async function renderSelectedCardPng() {
+        var card = cards[selected];
+        if (!card) return null;
+
+        await ensureMontserratLoaded();
+
+        var geometry = avatarGeometry[card.type];
+        if (!geometry) return null;
+        var exportScale = 1280 / geometry.size.width;
+        var canvas = document.createElement("canvas");
+        canvas.width = geometry.size.width * exportScale;
+        canvas.height = geometry.size.height * exportScale;
+        var ctx = canvas.getContext("2d");
+        ctx.scale(exportScale, exportScale);
+
+        if (card.type === "inner") {
+          ctx.fillStyle = card.color;
+          ctx.fillRect(0, 0, geometry.size.width, geometry.size.height);
+          ctx.fillStyle = card.textColor || card.color;
+          ctx.font = avatarGeometry.inner.textDraw.font;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "top";
+          ctx.letterSpacing = "3px";
+          ctx.fillText("INNER", avatarGeometry.inner.textDraw.x, avatarGeometry.inner.textDraw.y);
+          if (card.image) {
+            drawContain(ctx, await loadImage(card.image), getLogoSlotRect(card));
+          }
+        } else if (card.type === "resource") {
+          ctx.fillStyle = card.color;
+          ctx.fillRect(0, 0, geometry.size.width, geometry.size.height);
+          if (card.image) {
+            drawContain(ctx, await loadImage(card.image), getLogoSlotRect(card));
+          }
+          var resourceLogo = getResourceLogo(card.resourceLogo);
+          if (resourceLogo && resourceLogo.src) {
+            drawContain(ctx, await loadImage(resourceLogo.src), getSlotRect(card, "resource"));
+          }
+        } else if (card.type === "library") {
+          ctx.fillStyle = card.color;
+          ctx.fillRect(0, 0, geometry.size.width, geometry.size.height);
+          drawContain(ctx, await loadImage(GROUP2_LOGO_SRC), avatarGeometry.library.group2Slot);
+          if (card.image) {
+            drawContain(ctx, await loadImage(card.image), getLogoSlotRect(card));
+          }
+        } else if (card.type === "plain") {
+          ctx.fillStyle = card.color;
+          ctx.fillRect(0, 0, geometry.size.width, geometry.size.height);
+          if (card.image) {
+            drawContain(ctx, await loadImage(card.image), getLogoSlotRect(card));
+          }
+        } else if (card.type === "outer") {
+          ctx.fillStyle = card.color;
+          ctx.fillRect(0, 0, geometry.size.width, geometry.size.height);
+          if (card.image) {
+            drawContain(ctx, await loadImage(card.image), getLogoSlotRect(card));
+          }
+          var sixsns = getSixsnsLogo(card.sixsnsLogo);
+          if (sixsns && sixsns.src) {
+            drawContain(ctx, await loadImage(sixsns.src), getSlotRect(card, "sixsns"));
+          }
+        }
+
+        return canvas;
+      }
+
+      function downloadCanvas(canvas, filename) {
+        var link = document.createElement("a");
+        link.download = filename;
+        link.href = canvas.toDataURL("image/png");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+
+      function sanitizeFilename(value) {
+        return String(value || "avatar")
+          .trim()
+          .replace(/[\\/:*?"<>|]+/g, "-")
+          .replace(/\s+/g, "_") || "avatar";
+      }
+
+      function buildStateHash() {
+        return JSON.stringify({
+          cardOrder: cardOrder.slice(),
+          cards: cardOrder.map(function (cardId) {
+            var card = cards[cardId];
+            return card ? {
+              id: card.id,
+              type: card.type,
+              name: card.name,
+              color: card.color,
+              textColor: card.textColor,
+              image: card.image,
+              fileName: card.fileName,
+              sixsnsLogo: card.sixsnsLogo,
+              resourceLogo: card.resourceLogo,
+              logoSlotAdjust: card.logoSlotAdjust || { x: 0, y: 0, w: 0, h: 0 },
+              sixsnsSlotAdjust: card.sixsnsSlotAdjust || { x: 0, y: 0, w: 0, h: 0 },
+              resourceSlotAdjust: card.resourceSlotAdjust || { x: 0, y: 0, w: 0, h: 0 },
+              boardX: isBuiltinCard(card.id) ? undefined : Number(card.boardX) || 0,
+              boardY: isBuiltinCard(card.id) ? undefined : Number(card.boardY) || 0
+            } : null;
+          }).filter(Boolean)
+        });
+      }
+
+      function buildPersistPayload() {
+        var nextCards = {};
+        cardOrder.forEach(function (cardId) {
+          if (cards[cardId]) {
+            nextCards[cardId] = {
+              id: cards[cardId].id,
+              type: cards[cardId].type,
+              name: cards[cardId].name,
+              title: cards[cardId].title,
+              template: cards[cardId].template,
+              color: cards[cardId].color,
+              textColor: cards[cardId].textColor,
+              fileName: cards[cardId].fileName,
+              image: cards[cardId].image,
+              logoSlotAdjust: cards[cardId].logoSlotAdjust || { x: 0, y: 0, w: 0, h: 0 },
+              sixsnsSlotAdjust: cards[cardId].sixsnsSlotAdjust || { x: 0, y: 0, w: 0, h: 0 },
+              resourceSlotAdjust: cards[cardId].resourceSlotAdjust || { x: 0, y: 0, w: 0, h: 0 },
+              sixsnsLogo: cards[cardId].sixsnsLogo,
+              resourceLogo: cards[cardId].resourceLogo
+            };
+            if (!isBuiltinCard(cardId)) {
+              nextCards[cardId].boardX = Number(cards[cardId].boardX) || 0;
+              nextCards[cardId].boardY = Number(cards[cardId].boardY) || 0;
+            }
+          }
+        });
+        return {
+          selected: selected,
+          cardCounter: cardCounter,
+          cardOrder: cardOrder.slice(),
+          cards: nextCards
+        };
+      }
+
+      function persistStateToStorage() {
+        try {
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(buildPersistPayload()));
+          return true;
+        } catch (error) {
+          return false;
+        }
+      }
+
+      function ensureBuiltInCards() {
+        if (!cards["card-resource-1"]) {
+          cards["card-resource-1"] = {
+            id: "card-resource-1",
+            type: "resource",
+            name: "Resource",
+            title: "Resource",
+            template: "logo + Resource",
+            color: "#f03238",
+            textColor: "#ffffff",
+            fileName: "не выбран",
+            image: "",
+            logoSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+            sixsnsSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+            resourceSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+            sixsnsLogo: "primary-white",
+            resourceLogo: "resource",
+            metrics: {}
+          };
+          if (!cardOrder.includes("card-resource-1")) {
+            cardOrder.push("card-resource-1");
+          }
+        }
+        if (!cards["card-library-1"]) {
+          cards["card-library-1"] = {
+            id: "card-library-1",
+            type: "library",
+            name: "Лого/картинка",
+            title: "Лого/картинка",
+            template: "logo",
+            color: "#ff9500",
+            textColor: "#ffffff",
+            fileName: "не выбран",
+            image: "",
+            logoSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+            sixsnsSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+            resourceSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+            sixsnsLogo: "primary-white",
+            resourceLogo: "resource",
+            metrics: {}
+          };
+          if (!cardOrder.includes("card-library-1")) {
+            cardOrder.push("card-library-1");
+          }
+        }
+        if (!cards["card-plain-1"]) {
+          cards["card-plain-1"] = {
+            id: "card-plain-1",
+            type: "plain",
+            name: "Лого_центр",
+            title: "Лого_центр",
+            template: "logo",
+            color: "#ffffff",
+            textColor: "#ffffff",
+            fileName: "не выбран",
+            image: "",
+            logoSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+            sixsnsSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+            resourceSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+            sixsnsLogo: "primary-white",
+            resourceLogo: "resource",
+            metrics: {}
+          };
+          if (!cardOrder.includes("card-plain-1")) {
+            cardOrder.push("card-plain-1");
+          }
+        }
+        cardCounter = Math.max(cardCounter, cardOrder.length);
+      }
+
+      function restoreStateFromStorage() {
+        var raw = "";
+        try {
+          raw = window.localStorage.getItem(STORAGE_KEY) || "";
+        } catch (error) {
+          return false;
+        }
+        if (!raw) return false;
+        var payload;
+        try {
+          payload = JSON.parse(raw);
+        } catch (error) {
+          return false;
+        }
+        if (!payload || !Array.isArray(payload.cardOrder) || !payload.cards || typeof payload.cards !== "object") {
+          return false;
+        }
+
+        var nextOrder = payload.cardOrder.filter(function (cardId) {
+          return payload.cards[cardId] && typeof payload.cards[cardId] === "object";
+        });
+        if (!nextOrder.length) return false;
+
+        var nextCards = {};
+        nextOrder.forEach(function (cardId) {
+          var saved = payload.cards[cardId];
+          var type = saved.type === "outer" || saved.type === "resource" || saved.type === "library" || saved.type === "plain"
+            ? saved.type
+            : "inner";
+          nextCards[cardId] = {
+            id: cardId,
+            type: type,
+            name: String(saved.name || getDefaultCardName(type)),
+            title: String(saved.title || ""),
+            template: String(saved.template || ""),
+            color: normalizeHex(saved.color, getDefaultCardColor(type)),
+            textColor: normalizeHex(saved.textColor, type === "inner" ? "#F03238" : "#FFFFFF"),
+            fileName: typeof saved.fileName === "string" ? saved.fileName : "не выбран",
+            image: typeof saved.image === "string" ? saved.image : "",
+            logoSlotAdjust: {
+              x: Number(saved.logoSlotAdjust && saved.logoSlotAdjust.x) || 0,
+              y: Number(saved.logoSlotAdjust && saved.logoSlotAdjust.y) || 0,
+              w: Number(saved.logoSlotAdjust && saved.logoSlotAdjust.w) || 0,
+              h: Number(saved.logoSlotAdjust && saved.logoSlotAdjust.h) || 0
+            },
+            sixsnsSlotAdjust: {
+              x: Number(saved.sixsnsSlotAdjust && saved.sixsnsSlotAdjust.x) || 0,
+              y: Number(saved.sixsnsSlotAdjust && saved.sixsnsSlotAdjust.y) || 0,
+              w: Number(saved.sixsnsSlotAdjust && saved.sixsnsSlotAdjust.w) || 0,
+              h: Number(saved.sixsnsSlotAdjust && saved.sixsnsSlotAdjust.h) || 0
+            },
+            resourceSlotAdjust: {
+              x: Number(saved.resourceSlotAdjust && saved.resourceSlotAdjust.x) || 0,
+              y: Number(saved.resourceSlotAdjust && saved.resourceSlotAdjust.y) || 0,
+              w: Number(saved.resourceSlotAdjust && saved.resourceSlotAdjust.w) || 0,
+              h: Number(saved.resourceSlotAdjust && saved.resourceSlotAdjust.h) || 0
+            },
+            sixsnsLogo: getSixsnsLogo(saved.sixsnsLogo).id,
+            resourceLogo: getResourceLogo(saved.resourceLogo).id,
+            metrics: {}
+          };
+          if (!isBuiltinCard(cardId)) {
+            nextCards[cardId].boardX = Number(saved.boardX);
+            nextCards[cardId].boardY = Number(saved.boardY);
+            ensureCopyBoardPosition(nextCards[cardId]);
+          }
+        });
+
+        cards = nextCards;
+        cardOrder = nextOrder;
+        selected = cards[payload.selected] ? payload.selected : nextOrder[0];
+        activeSlotEdit = null;
+        cardCounter = Math.max(Number(payload.cardCounter) || 0, nextOrder.length, 5);
+        return true;
+      }
+
+      function refreshSaveButtonState() {
+        var isSaved = buildStateHash() === savedStateHash;
+        saveStateBtn.textContent = isSaved ? "saved" : "save";
+      }
+
+      function markSaved() {
+        savedStateHash = buildStateHash();
+        refreshSaveButtonState();
+      }
+
+      function markDirty() {
+        refreshSaveButtonState();
+      }
+
+      function refreshGridButtonState() {
+        gridToggleBtn.classList.toggle("is-active", gridEnabled);
+      }
+
+      function applyZoom() {
+        root.style.setProperty("--zoom", zoom.toFixed(4));
+        root.style.setProperty("--pan-x", Math.round(panX) + "px");
+        root.style.setProperty("--pan-y", Math.round(panY) + "px");
+        zoomValue.textContent = Math.round(zoom * 100) + "%";
+      }
+
+      function setZoom(nextZoom, anchorX, anchorY) {
+        var rect = canvasShell.getBoundingClientRect();
+        var clamped = Math.max(0.05, Math.min(2.4, nextZoom));
+        var ax = Number.isFinite(anchorX) ? anchorX - rect.left : rect.width / 2;
+        var ay = Number.isFinite(anchorY) ? anchorY - rect.top : rect.height / 2;
+        var worldX = (ax - panX) / zoom;
+        var worldY = (ay - panY) / zoom;
+        zoom = clamped;
+        panX = ax - worldX * zoom;
+        panY = ay - worldY * zoom;
+        applyZoom();
+      }
+
+      function fitCanvas() {
+        var rect = canvasShell.getBoundingClientRect();
+        zoom = Math.max(0.05, Math.min(1.6, Math.min((rect.width - 90) / canvasBoard.offsetWidth, (rect.height - 90) / canvasBoard.offsetHeight)));
+        panX = Math.round((rect.width - canvasBoard.offsetWidth * zoom) / 2);
+        panY = Math.round((rect.height - canvasBoard.offsetHeight * zoom) / 2);
+        applyZoom();
+      }
+
+      function setActiveView(viewId) {
+        viewTabs.forEach(function (tab) {
+          tab.classList.toggle("is-active", tab.dataset.viewTab === viewId);
+        });
+        workspaceViews.forEach(function (view) {
+          view.classList.toggle("is-active", view.dataset.view === viewId);
+        });
+        if (viewId === "avatar") {
+          window.requestAnimationFrame(fitCanvas);
+        }
+      }
+
+      viewTabs.forEach(function (tab) {
+        tab.addEventListener("click", function () {
+          setActiveView(tab.dataset.viewTab);
+        });
+      });
+
+      cardsList.addEventListener("click", function (event) {
+        var selectBtn = event.target.closest("[data-select-card]");
+        if (selectBtn) {
+          event.preventDefault();
+          event.stopPropagation();
+          selectCard(selectBtn.dataset.selectCard);
+          return;
+        }
+        var editBtn = event.target.closest("[data-edit-card]");
+        if (editBtn) {
+          event.preventDefault();
+          event.stopPropagation();
+          beginCardNameEdit(editBtn.dataset.editCard);
+          return;
+        }
+        var duplicateBtn = event.target.closest("[data-duplicate-card]");
+        if (duplicateBtn) {
+          event.preventDefault();
+          event.stopPropagation();
+          duplicateCard(duplicateBtn.dataset.duplicateCard);
+          return;
+        }
+        var deleteBtn = event.target.closest("[data-delete-card]");
+        if (deleteBtn) {
+          event.preventDefault();
+          event.stopPropagation();
+          deleteCard(deleteBtn.dataset.deleteCard);
+          return;
+        }
+        var row = event.target.closest(".card-row");
+        if (row) {
+          selectCard(row.dataset.card);
+        }
+      });
+
+      cardsList.addEventListener("keydown", function (event) {
+        var input = event.target.closest(".row-name");
+        if (!input) return;
+        if (event.key === "Enter") {
+          event.preventDefault();
+          commitCardName(input.dataset.cardName, input.value);
+          input.readOnly = true;
+          input.blur();
+        }
+        if (event.key === "Escape") {
+          event.preventDefault();
+          var card = cards[input.dataset.cardName];
+          input.value = card ? card.name : input.value;
+          input.readOnly = true;
+          input.blur();
+        }
+      });
+
+      sixsnsLogoGrid.addEventListener("click", function (event) {
+        var option = event.target.closest("[data-sixsns-logo]");
+        if (!option) return;
+        setSixsnsLogo(option.dataset.sixsnsLogo);
+      });
+
+      resourceLogoGrid.addEventListener("click", function (event) {
+        var option = event.target.closest("[data-resource-logo]");
+        if (!option) return;
+        setResourceLogo(option.dataset.resourceLogo);
+      });
+
+      cardsList.addEventListener("blur", function (event) {
+        var input = event.target.closest(".row-name");
+        if (!input) return;
+        commitCardName(input.dataset.cardName, input.value);
+        input.readOnly = true;
+      }, true);
+
+      workArea.addEventListener("click", function (event) {
+        var editableSlot = event.target.closest("[data-slot-kind]");
+        if (editableSlot) {
+          var slotCardId = editableSlot.dataset.slot;
+          var slotKind = editableSlot.dataset.slotKind;
+          selectCard(slotCardId);
+          if (slotKind === "logo" && !cards[slotCardId].image) {
+            clearActiveSlotEdit();
+          } else {
+            activeSlotEdit = { cardId: slotCardId, kind: slotKind };
+          }
+          renderCards();
+          event.stopPropagation();
+          return;
+        }
+        var card = event.target.closest(".avatar-card");
+        if (!card) return;
+        event.stopPropagation();
+        clearActiveSlotEdit();
+        selectCard(card.dataset.card);
+      });
+
+      workArea.addEventListener("pointerdown", function (event) {
+        var boardHandle = event.target.closest("[data-board-handle]");
+        if (boardHandle && event.button === 0) {
+          var boardCardId = boardHandle.dataset.boardHandle;
+          var boardCard = cards[boardCardId];
+          if (!boardCard || isBuiltinCard(boardCardId)) return;
+          ensureCopyBoardPosition(boardCard);
+          selectCard(boardCardId);
+          boardDragState = {
+            pointerId: event.pointerId,
+            cardId: boardCardId,
+            startX: event.clientX,
+            startY: event.clientY,
+            boardX: boardCard.boardX,
+            boardY: boardCard.boardY,
+            handle: boardHandle
+          };
+          boardHandle.classList.add("is-dragging");
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+        var handle = event.target.closest("[data-logo-handle]");
+        if (!handle) return;
+        var slot = handle.closest("[data-slot-kind]");
+        if (!slot) return;
+        var cardId = slot.dataset.slot;
+        var slotKind = slot.dataset.slotKind;
+        var card = cards[cardId];
+        if (!card) return;
+        if (slotKind === "logo" && !card.image) return;
+        var slotRect = getSlotRect(card, slotKind);
+        event.preventDefault();
+        event.stopPropagation();
+        slotEditState = {
+          pointerId: event.pointerId,
+          cardId: cardId,
+          slotKind: slotKind,
+          mode: handle.dataset.logoHandle,
+          startX: event.clientX,
+          startY: event.clientY,
+          startRect: slotRect
+        };
+      });
+
+      window.addEventListener("pointermove", function (event) {
+        if (boardDragState && boardDragState.pointerId === event.pointerId) {
+          var boardCard = cards[boardDragState.cardId];
+          if (!boardCard) return;
+          var bdx = (event.clientX - boardDragState.startX) / zoom;
+          var bdy = (event.clientY - boardDragState.startY) / zoom;
+          boardCard.boardX = boardDragState.boardX + bdx;
+          boardCard.boardY = boardDragState.boardY + bdy;
+          applyBoardPosition(boardDragState.cardId);
+          updateWorkAreaSize();
+          markDirty();
+          return;
+        }
+        if (!slotEditState || slotEditState.pointerId !== event.pointerId) return;
+        var card = cards[slotEditState.cardId];
+        if (!card) return;
+        var dx = (event.clientX - slotEditState.startX) / zoom;
+        var dy = (event.clientY - slotEditState.startY) / zoom;
+        var nextRect = {
+          x: slotEditState.startRect.x,
+          y: slotEditState.startRect.y,
+          w: slotEditState.startRect.w,
+          h: slotEditState.startRect.h
+        };
+        if (slotEditState.mode === "move") {
+          nextRect.x += dx;
+          nextRect.y += dy;
+        } else if (slotEditState.mode === "resize") {
+          var factor = 1 + (dx + dy) / 260;
+          nextRect.w = slotEditState.startRect.w * factor;
+          nextRect.h = slotEditState.startRect.h * factor;
+        }
+        setSlotRect(card, slotEditState.slotKind, nextRect);
+        renderSlot(slotEditState.cardId, slotEditState.slotKind);
+        markDirty();
+      });
+
+      function stopBoardDrag(event) {
+        if (!boardDragState || boardDragState.pointerId !== event.pointerId) return;
+        if (boardDragState.handle) boardDragState.handle.classList.remove("is-dragging");
+        boardDragState = null;
+      }
+
+      function stopSlotEdit(event) {
+        if (!slotEditState || slotEditState.pointerId !== event.pointerId) return;
+        slotEditState = null;
+      }
+
+      function stopPointerEdits(event) {
+        stopBoardDrag(event);
+        stopSlotEdit(event);
+      }
+
+      window.addEventListener("pointerup", stopPointerEdits);
+      window.addEventListener("pointercancel", stopPointerEdits);
+
+      logoInput.addEventListener("change", function () {
+        var file = logoInput.files && logoInput.files[0];
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function (event) {
+          cards[selected].image = event.target.result;
+          cards[selected].fileName = file.name;
+          activeSlotEdit = { cardId: selected, kind: "logo" };
+          renderInspector();
+          renderCards();
+          markDirty();
+        };
+        reader.readAsDataURL(file);
+        logoInput.value = "";
+      });
+
+      removeLogoBtn.addEventListener("click", function () {
+        if (!cards[selected].image) return;
+        cards[selected].image = "";
+        cards[selected].fileName = "не выбран";
+        if (activeSlotEdit && activeSlotEdit.cardId === selected && activeSlotEdit.kind === "logo") clearActiveSlotEdit();
+        renderInspector();
+        renderCards();
+        markDirty();
+      });
+
+      saveStateBtn.addEventListener("click", function () {
+        if (persistStateToStorage()) {
+          markSaved();
+        }
+      });
+
+      gridToggleBtn.addEventListener("click", function () {
+        gridEnabled = !gridEnabled;
+        refreshGridButtonState();
+        renderCards();
+      });
+
+      hexInput.addEventListener("change", function () {
+        setColor(hexInput.value);
+      });
+
+      colorInput.addEventListener("input", function () {
+        setColor(colorInput.value);
+      });
+
+      textHexInput.addEventListener("input", function () {
+        if (isHexColor(textHexInput.value)) setTextColor(textHexInput.value);
+      });
+
+      textHexInput.addEventListener("change", function () {
+        if (isHexColor(textHexInput.value)) {
+          setTextColor(textHexInput.value);
+        } else {
+          textHexInput.value = cards[selected].textColor || cards[selected].color;
+        }
+      });
+
+      textColorInput.addEventListener("input", function () {
+        setTextColor(textColorInput.value);
+      });
+
+
+      pngBtn.addEventListener("click", async function () {
+        var card = cards[selected];
+        if (!card) return;
+        pngBtn.textContent = "...";
+        try {
+          var canvas = await renderSelectedCardPng();
+          if (canvas) downloadCanvas(canvas, sanitizeFilename(card.name) + ".png");
+        } finally {
+          pngBtn.textContent = "PNG";
+        }
+      });
+
+      document.getElementById("zoomOut").addEventListener("click", function () {
+        setZoom(zoom / 1.18);
+      });
+
+      document.getElementById("zoomIn").addEventListener("click", function () {
+        setZoom(zoom * 1.18);
+      });
+
+      document.getElementById("fitBtn").addEventListener("click", fitCanvas);
+
+      canvasShell.addEventListener("wheel", function (event) {
+        event.preventDefault();
+        setZoom(zoom * Math.exp(-event.deltaY * 0.0013), event.clientX, event.clientY);
+      }, { passive: false });
+
+      canvasShell.addEventListener("pointerdown", function (event) {
+        if (event.button !== 0 || event.target.closest(".avatar-card")) return;
+        panState = {
+          pointerId: event.pointerId,
+          startX: event.clientX,
+          startY: event.clientY,
+          panX: panX,
+          panY: panY
+        };
+        canvasShell.classList.add("is-panning");
+        canvasShell.setPointerCapture(event.pointerId);
+      });
+
+      canvasShell.addEventListener("pointermove", function (event) {
+        if (!panState || panState.pointerId !== event.pointerId) return;
+        panX = panState.panX + event.clientX - panState.startX;
+        panY = panState.panY + event.clientY - panState.startY;
+        applyZoom();
+      });
+
+      function endPan(event) {
+        if (!panState || panState.pointerId !== event.pointerId) return;
+        panState = null;
+        canvasShell.classList.remove("is-panning");
+      }
+
+      canvasShell.addEventListener("pointerup", endPan);
+      canvasShell.addEventListener("pointercancel", endPan);
+      window.addEventListener("resize", fitCanvas);
+
+      ensureMontserratLoaded();
+      restoreStateFromStorage();
+      ensureBuiltInCards();
+      renderSidebar();
+      renderCanvas();
+      renderInspector();
+      refreshGridButtonState();
+      markSaved();
+      fitCanvas();
+    }());
+  </script>
+</body>
+</html>
