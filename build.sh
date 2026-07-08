@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SRC_DIR="$(cd "$ROOT_DIR/../02_ENGINE_FACTORY/avatar-engine-inline" && pwd)"
+SRC_DIR="$(cd "$ROOT_DIR/../avatar-engine-inline" && pwd)"
 
 test -f "$SRC_DIR/index.html"
 test -d "$SRC_DIR/assets/fixed"
