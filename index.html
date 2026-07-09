@@ -521,6 +521,23 @@
       cursor: grab;
     }
 
+    .canvas-shell,
+    .canvas-board,
+    .work-area,
+    .avatar-card,
+    .card-label,
+    .logo-slot,
+    .fixed-slot {
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    .canvas-shell img,
+    .work-area img {
+      -webkit-user-drag: none;
+    }
+
     .right-tools {
       display: grid;
       align-content: start;
@@ -2317,6 +2334,14 @@
         renderCards();
         event.preventDefault();
         event.stopPropagation();
+      });
+
+      workArea.addEventListener("selectstart", function (event) {
+        event.preventDefault();
+      });
+
+      workArea.addEventListener("dragstart", function (event) {
+        event.preventDefault();
       });
 
       workArea.addEventListener("pointerdown", function (event) {
