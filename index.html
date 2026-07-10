@@ -688,18 +688,23 @@
       opacity: 1;
     }
 
-    .avatar-card.show-grid::after {
-      content: "";
+    .card-grid {
       position: absolute;
       inset: 0;
       z-index: 3;
+      display: none;
+      overflow: hidden;
       pointer-events: none;
-      background-image:
-        repeating-linear-gradient(0deg, transparent 0, transparent 63px, rgba(42, 46, 54, 0.34) 63px, rgba(42, 46, 54, 0.34) 64px),
-        repeating-linear-gradient(90deg, transparent 0, transparent 63px, rgba(42, 46, 54, 0.34) 63px, rgba(42, 46, 54, 0.34) 64px),
-        repeating-linear-gradient(0deg, transparent 0, transparent 255px, rgba(42, 46, 54, 0.58) 255px, rgba(42, 46, 54, 0.58) 256px),
-        repeating-linear-gradient(90deg, transparent 0, transparent 255px, rgba(42, 46, 54, 0.58) 255px, rgba(42, 46, 54, 0.58) 256px);
-      background-position: 0 0;
+    }
+
+    .avatar-card.show-grid .card-grid {
+      display: block;
+    }
+
+    .card-grid svg {
+      display: block;
+      width: 1280px;
+      height: 1280px;
     }
 
     .avatar-card.center-guide-x::before,
@@ -728,7 +733,8 @@
       outline-offset: 8px;
     }
 
-    .template-inner {
+    .template-inner,
+    .template-inner-text {
       width: 1280px;
       height: 1280px;
       color: var(--accent);
@@ -751,8 +757,9 @@
     .inner-word {
       position: absolute;
       top: 287px;
-      left: 294px;
-      width: 706px;
+      left: 0;
+      right: 0;
+      width: auto;
       height: 154px;
       text-align: center;
       color: currentColor;
@@ -761,6 +768,35 @@
       font-weight: 600;
       line-height: 1;
       letter-spacing: 0;
+    }
+
+    .inner-bottom-text {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 24px;
+      text-align: center;
+      color: currentColor;
+      font-family: "Montserrat", "Segoe UI", Arial, sans-serif;
+      font-weight: 400;
+      line-height: 1.1;
+      letter-spacing: 0;
+      overflow: hidden;
+      word-break: break-word;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .inner-bottom-text.is-move-enabled {
+      cursor: move;
+    }
+
+    .template-innerText .logo-slot {
+      top: 564px;
+      left: 499px;
+      width: 278px;
+      height: 273px;
     }
 
     .logo-slot,
@@ -776,6 +812,12 @@
 
     .logo-slot {
       z-index: 2;
+    }
+
+    .fixed-slot[data-slot-kind="sixsns"],
+    .fixed-slot[data-slot-kind="resource"] {
+      cursor: default;
+      pointer-events: none;
     }
 
     .logo-viewport {
@@ -854,27 +896,31 @@
     }
 
     .template-inner .logo-slot {
-      top: 564px;
-      left: 499px;
-      width: 278px;
-      height: 273px;
+      top: 500px;
+      left: 380px;
+      width: 520px;
+      height: 520px;
     }
 
     .template-outer .logo-slot,
     .template-resource .logo-slot {
       top: 236px;
-      left: 495px;
+      left: 497px;
       width: 286px;
       height: 281px;
     }
 
     .template-library .logo-slot[data-slot-kind="logo"] {
-      top: 500px;
-      left: 520px;
-      width: 280px;
-      height: 220px;
+      top: 677px;
+      left: 562px;
+      width: 156px;
+      height: 156px;
       z-index: 2;
       overflow: visible;
+    }
+
+    .template-library .logo-slot[data-slot-kind="logo"].has-image {
+      z-index: 4;
     }
 
     .template-library .logo-slot[data-slot-kind="logo"] .logo-viewport {
@@ -916,12 +962,28 @@
       outline: 0;
     }
 
-    .template-library .fixed-slot[data-slot-kind="group2"] {
-      top: 440px;
-      left: 440px;
-      width: 400px;
-      height: 400px;
+    .template-library .logo-slot[data-slot-kind="logo"].is-empty .slot-empty {
       pointer-events: none;
+    }
+
+    .template-library .logo-slot[data-slot-kind="logo"].is-empty {
+      pointer-events: none;
+    }
+
+    .template-library .fixed-slot[data-slot-kind="group2"] {
+      top: 380px;
+      left: 380px;
+      width: 520px;
+      height: 520px;
+      cursor: pointer;
+    }
+
+    .template-library .fixed-slot[data-slot-kind="group2"].is-editing {
+      z-index: 3;
+    }
+
+    .fixed-slot.is-move-enabled .logo-viewport {
+      cursor: move;
     }
 
     .fixed-slot {
@@ -1012,12 +1074,25 @@
         </div>
 
         <div class="field text-settings" id="textSettings">
-          <label for="innerTextValue">Текст</label>
+          <label for="innerTextValue">Текст INNER</label>
           <input class="control" id="innerTextValue" type="text" value="INNER" readonly>
+          <label for="textHexInput">Цвет INNER</label>
           <div class="color-row">
-            <input class="control" id="textHexInput" type="text" spellcheck="false" aria-label="Цвет текста">
-            <input class="color-input" id="textColorInput" type="color" aria-label="Выбрать цвет текста">
+            <input class="control" id="textHexInput" type="text" spellcheck="false" aria-label="Цвет INNER">
+            <input class="color-input" id="textColorInput" type="color" aria-label="Выбрать цвет INNER">
           </div>
+        </div>
+
+        <div class="field text-settings" id="bottomTextSettings" hidden>
+          <label for="bottomTextValue">Текст снизу</label>
+          <input class="control" id="bottomTextValue" type="text" spellcheck="false">
+          <label for="bottomTextHexInput">Цвет текста</label>
+          <div class="color-row">
+            <input class="control" id="bottomTextHexInput" type="text" spellcheck="false" aria-label="Цвет текста снизу">
+            <input class="color-input" id="bottomTextColorInput" type="color" aria-label="Выбрать цвет текста снизу">
+          </div>
+          <label for="bottomTextSizeValue">Размер шрифта</label>
+          <input class="control" id="bottomTextSizeValue" type="number" min="12" max="220" step="1">
         </div>
 
         <div class="field" id="logoFileField">
@@ -1087,31 +1162,58 @@
       var BOARD_ROW_HEIGHT = 1318;
       var BOARD_COPY_ROW_Y = BOARD_ROW_HEIGHT + BOARD_CARD_GAP;
       var CENTER_GUIDE_TOLERANCE = 8;
+      var GRID_MINOR_STEP = 64;
+      var GRID_MAJOR_STEP = 256;
+      var CARD_GRID_MARKUP = (function () {
+        var lines = [];
+        var pos;
+        for (pos = GRID_MINOR_STEP; pos < BOARD_CARD_WIDTH; pos += GRID_MINOR_STEP) {
+          var isMajor = pos % GRID_MAJOR_STEP === 0;
+          var stroke = isMajor ? "rgba(42, 46, 54, 0.58)" : "rgba(42, 46, 54, 0.34)";
+          lines.push(
+            "<line x1=\"" + pos + "\" y1=\"0\" x2=\"" + pos + "\" y2=\"" + BOARD_CARD_WIDTH + "\" stroke=\"" + stroke + "\" stroke-width=\"1\"/>",
+            "<line x1=\"0\" y1=\"" + pos + "\" x2=\"" + BOARD_CARD_WIDTH + "\" y2=\"" + pos + "\" stroke=\"" + stroke + "\" stroke-width=\"1\"/>"
+          );
+        }
+        return [
+          "<div class=\"card-grid\" aria-hidden=\"true\">",
+            "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1280 1280\" width=\"1280\" height=\"1280\" shape-rendering=\"crispEdges\" aria-hidden=\"true\">",
+              lines.join(""),
+            "</svg>",
+          "</div>"
+        ].join("");
+      }());
       var savedStateHash = "";
       var gridEnabled = false;
       var STORAGE_KEY = "avatar-engine-inline-state-v1";
-      var BUILTIN_CARD_IDS = ["card-inner-1", "card-outer-1", "card-resource-1", "card-library-1", "card-plain-1"];
-      var cardCounter = 5;
+      var BUILTIN_CARD_IDS = ["card-inner-1", "card-inner-text-1", "card-outer-1", "card-resource-1", "card-library-1", "card-plain-1"];
+      var cardCounter = 6;
       var avatarGeometry = {
         inner: {
           size: { width: 1280, height: 1280 },
+          logoSlot: { x: 380, y: 500, w: 520, h: 520 },
+          textDraw: { x: 640, y: 287, font: "600 220px \"Montserrat\", Segoe UI, Arial, sans-serif" }
+        },
+        innerText: {
+          size: { width: 1280, height: 1280 },
           logoSlot: { x: 499, y: 564, w: 278, h: 273 },
+          bottomTextSlot: { x: 48, y: 850, w: 1184, h: 200 },
           textDraw: { x: 640, y: 287, font: "600 220px \"Montserrat\", Segoe UI, Arial, sans-serif" }
         },
         outer: {
           size: { width: 1280, height: 1280 },
-          logoSlot: { x: 495, y: 236, w: 286, h: 281 },
+          logoSlot: { x: 497, y: 236, w: 286, h: 281 },
           sixsnsSlot: { x: 430, y: 810, w: 420, h: 253 }
         },
         resource: {
           size: { width: 1280, height: 1280 },
-          logoSlot: { x: 495, y: 236, w: 286, h: 281 },
+          logoSlot: { x: 497, y: 236, w: 286, h: 281 },
           resourceSlot: { x: 430, y: 810, w: 420, h: 253 }
         },
         library: {
           size: { width: 1280, height: 1280 },
-          group2Slot: { x: 440, y: 440, w: 400, h: 400 },
-          logoSlot: { x: 520, y: 500, w: 280, h: 220 }
+          group2Slot: { x: 380, y: 380, w: 520, h: 520 },
+          logoSlot: { x: 562, y: 677, w: 156, h: 156 }
         },
         plain: {
           size: { width: 1280, height: 1280 },
@@ -1143,6 +1245,29 @@
           fileName: "не выбран",
           image: "",
           logoSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          group2SlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          sixsnsSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          resourceSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          sixsnsLogo: "primary-white",
+          resourceLogo: "resource",
+          metrics: {}
+        },
+        "card-inner-text-1": {
+          id: "card-inner-text-1",
+          type: "innerText",
+          name: "Inner текст",
+          title: "Inner текст",
+          template: "INNER + logo + текст",
+          color: "#ffffff",
+          textColor: "#f03238",
+          bottomText: "ТЕКСТ",
+          bottomTextSize: 72,
+          bottomTextColor: "#f03238",
+          fileName: "не выбран",
+          image: "",
+          logoSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          bottomTextSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          group2SlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
           sixsnsSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
           resourceSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
           sixsnsLogo: "primary-white",
@@ -1160,6 +1285,7 @@
           fileName: "не выбран",
           image: "",
           logoSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          group2SlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
           sixsnsSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
           resourceSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
           sixsnsLogo: "primary-white",
@@ -1177,6 +1303,7 @@
           fileName: "не выбран",
           image: "",
           logoSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          group2SlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
           sixsnsSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
           resourceSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
           sixsnsLogo: "primary-white",
@@ -1194,6 +1321,7 @@
           fileName: "не выбран",
           image: "",
           logoSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          group2SlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
           sixsnsSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
           resourceSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
           sixsnsLogo: "primary-white",
@@ -1211,6 +1339,7 @@
           fileName: "не выбран",
           image: "",
           logoSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
+          group2SlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
           sixsnsSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
           resourceSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
           sixsnsLogo: "primary-white",
@@ -1218,7 +1347,8 @@
           metrics: {}
         }
       };
-      var cardOrder = ["card-inner-1", "card-outer-1", "card-resource-1", "card-library-1", "card-plain-1"];
+      var defaultBuiltinCards = JSON.parse(JSON.stringify(cards));
+      var cardOrder = ["card-inner-1", "card-inner-text-1", "card-outer-1", "card-resource-1", "card-library-1", "card-plain-1"];
       var viewTabs = Array.from(document.querySelectorAll("[data-view-tab]"));
       var workspaceViews = Array.from(document.querySelectorAll("[data-view]"));
       var cardsList = document.getElementById("cardsList");
@@ -1226,6 +1356,11 @@
       var hexInput = document.getElementById("hexInput");
       var colorInput = document.getElementById("colorInput");
       var textSettings = document.getElementById("textSettings");
+      var bottomTextSettings = document.getElementById("bottomTextSettings");
+      var bottomTextValue = document.getElementById("bottomTextValue");
+      var bottomTextSizeValue = document.getElementById("bottomTextSizeValue");
+      var bottomTextHexInput = document.getElementById("bottomTextHexInput");
+      var bottomTextColorInput = document.getElementById("bottomTextColorInput");
       var textHexInput = document.getElementById("textHexInput");
       var textColorInput = document.getElementById("textColorInput");
       var logoInput = document.getElementById("logoInput");
@@ -1288,13 +1423,17 @@
       }
 
       function getDefaultCardColor(type) {
-        if (type === "inner" || type === "plain") return "#FFFFFF";
+        if (type === "inner" || type === "innerText" || type === "plain") return "#FFFFFF";
         if (type === "library") return "#FF9500";
         return "#F03238";
       }
 
       function isBuiltinCard(cardId) {
         return BUILTIN_CARD_IDS.indexOf(cardId) >= 0;
+      }
+
+      function isFixedBrandSlot(kind) {
+        return kind === "sixsns" || kind === "resource";
       }
 
       function getCopyCardIds() {
@@ -1364,8 +1503,23 @@
         }).join("");
       }
 
+      function isInnerLikeCard(card) {
+        return card && (card.type === "inner" || card.type === "innerText");
+      }
+
+      function getBottomTextColor(card) {
+        return card.bottomTextColor || card.textColor || card.color;
+      }
+
+      function normalizeBottomTextSize(value, fallback) {
+        var size = Number(value);
+        if (!Number.isFinite(size)) size = Number(fallback) || 72;
+        return Math.max(12, Math.min(220, Math.round(size)));
+      }
+
       function getDefaultCardName(type) {
         if (type === "inner") return "Новая_внутренняя";
+        if (type === "innerText") return "Новая_INNER_текст";
         if (type === "resource") return "Новая_ресурс";
         if (type === "library") return "Новая_библиотека";
         if (type === "plain") return "Новая_центр";
@@ -1383,6 +1537,13 @@
             "<div class=\"inner-word\">INNER</div>",
             "<div class=\"logo-slot\" data-slot=\"" + card.id + "\" data-slot-kind=\"logo\"></div>",
             "<div class=\"fixed-note\">fixed: inner</div>"
+          ].join("");
+        } else if (card.type === "innerText") {
+          body = [
+            "<div class=\"inner-word\">INNER</div>",
+            "<div class=\"logo-slot\" data-slot=\"" + card.id + "\" data-slot-kind=\"logo\"></div>",
+            "<div class=\"inner-bottom-text\" data-slot=\"" + card.id + "\" data-slot-kind=\"bottomText\" data-inner-bottom-text=\"" + card.id + "\"></div>",
+            "<div class=\"fixed-note\">inner + logo + текст</div>"
           ].join("");
         } else if (card.type === "resource") {
           body = [
@@ -1412,6 +1573,7 @@
             "<div class=\"avatar-card template-" + card.type + (isTemplate ? " is-template" : "") + (card.id === selected ? " is-selected" : "") + "\" data-card=\"" + card.id + "\">",
               templateNotice,
               body,
+              CARD_GRID_MARKUP,
             "</div>",
           "</figure>"
         ].join("");
@@ -1483,6 +1645,11 @@
         moveSlotEdit = null;
       }
 
+      function activateMovableSlot(cardId, kind) {
+        activeSlotEdit = { cardId: cardId, kind: kind };
+        moveSlotEdit = { cardId: cardId, kind: kind };
+      }
+
       function appendSlotHandles(slot) {
         slot.insertAdjacentHTML("beforeend",
           "<button class=\"logo-handle logo-handle-resize\" type=\"button\" data-logo-handle=\"resize\" aria-label=\"Изменить размер слота\">↘</button>"
@@ -1491,6 +1658,7 @@
 
       function getBaseSlot(card, kind) {
         if (kind === "logo") return avatarGeometry[card.type].logoSlot;
+        if (kind === "bottomText") return avatarGeometry.innerText.bottomTextSlot;
         if (kind === "group2") return avatarGeometry.library.group2Slot;
         if (kind === "sixsns") return avatarGeometry.outer.sixsnsSlot;
         if (kind === "resource") return avatarGeometry.resource.resourceSlot;
@@ -1502,6 +1670,10 @@
           if (!card.logoSlotAdjust) card.logoSlotAdjust = { x: 0, y: 0, w: 0, h: 0 };
           return card.logoSlotAdjust;
         }
+        if (kind === "group2") {
+          if (!card.group2SlotAdjust) card.group2SlotAdjust = { x: 0, y: 0, w: 0, h: 0 };
+          return card.group2SlotAdjust;
+        }
         if (kind === "sixsns") {
           if (!card.sixsnsSlotAdjust) card.sixsnsSlotAdjust = { x: 0, y: 0, w: 0, h: 0 };
           return card.sixsnsSlotAdjust;
@@ -1509,6 +1681,10 @@
         if (kind === "resource") {
           if (!card.resourceSlotAdjust) card.resourceSlotAdjust = { x: 0, y: 0, w: 0, h: 0 };
           return card.resourceSlotAdjust;
+        }
+        if (kind === "bottomText") {
+          if (!card.bottomTextSlotAdjust) card.bottomTextSlotAdjust = { x: 0, y: 0, w: 0, h: 0 };
+          return card.bottomTextSlotAdjust;
         }
         return { x: 0, y: 0, w: 0, h: 0 };
       }
@@ -1540,12 +1716,14 @@
       function setSlotRect(card, kind, rect) {
         var base = getBaseSlot(card, kind);
         if (!base) return;
-        var clamped = clampSlotRect(card, rect);
+        var clamped = kind === "bottomText"
+          ? clampSlotRect(card, { x: rect.x, y: rect.y, w: base.w, h: base.h })
+          : clampSlotRect(card, rect);
         var adjust = ensureSlotAdjust(card, kind);
         adjust.x = clamped.x - base.x;
         adjust.y = clamped.y - base.y;
-        adjust.w = clamped.w - base.w;
-        adjust.h = clamped.h - base.h;
+        adjust.w = kind === "bottomText" ? 0 : clamped.w - base.w;
+        adjust.h = kind === "bottomText" ? 0 : clamped.h - base.h;
       }
 
       function getLogoSlotRect(card) {
@@ -1558,6 +1736,7 @@
 
       function renderSlot(cardId, kind) {
         if (kind === "logo") renderLogo(cardId);
+        else if (kind === "bottomText") renderInnerBottomText(cardId);
         else renderFixedSlot(cardId, kind);
       }
 
@@ -1565,7 +1744,7 @@
         var card = cards[cardId];
         var slot = document.querySelector(".fixed-slot[data-slot=\"" + cardId + "\"][data-slot-kind=\"" + kind + "\"]");
         if (!slot || !card) return;
-        var slotRect = kind === "group2" ? avatarGeometry.library.group2Slot : getSlotRect(card, kind);
+        var slotRect = getSlotRect(card, kind);
         slot.style.left = slotRect.x + "px";
         slot.style.top = slotRect.y + "px";
         slot.style.width = slotRect.w + "px";
@@ -1591,9 +1770,15 @@
           image.alt = "Group 2";
         }
         viewport.appendChild(image);
-        if (kind !== "group2" && isSlotEditing(cardId, kind)) {
+        if (kind === "group2" && shouldShowGroup2Handles(cardId, card)) {
           slot.classList.add("is-editing");
           appendSlotHandles(slot);
+        } else if (!isFixedBrandSlot(kind) && isSlotEditing(cardId, kind)) {
+          slot.classList.add("is-editing");
+          appendSlotHandles(slot);
+        }
+        if (isSlotMoveEnabled(cardId, kind)) {
+          slot.classList.add("is-move-enabled");
         }
       }
 
@@ -1608,8 +1793,37 @@
       function shouldShowLogoHandles(cardId, card) {
         if (!card || !card.image) return false;
         if (isSlotEditing(cardId, "logo")) return true;
-        if (cardId === selected && (card.type === "library" || card.type === "plain")) return true;
+        if (cardId === selected && (card.type === "library" || card.type === "plain" || card.type === "innerText")) return true;
         return false;
+      }
+
+      function shouldShowGroup2Handles(cardId, card) {
+        if (!card || card.type !== "library") return false;
+        if (isSlotEditing(cardId, "group2")) return true;
+        if (cardId === selected) return true;
+        return false;
+      }
+
+      function renderInnerBottomText(cardId) {
+        var card = cards[cardId];
+        var node = document.querySelector("[data-inner-bottom-text=\"" + cardId + "\"]");
+        if (!node || !card) return;
+        var slotRect = getSlotRect(card, "bottomText");
+        node.style.left = slotRect.x + "px";
+        node.style.top = slotRect.y + "px";
+        node.style.width = slotRect.w + "px";
+        node.style.height = slotRect.h + "px";
+        node.textContent = card.bottomText || "ТЕКСТ";
+        node.style.fontSize = normalizeBottomTextSize(card.bottomTextSize, 72) + "px";
+        node.style.color = getBottomTextColor(card);
+        node.classList.toggle("is-move-enabled", isSlotMoveEnabled(cardId, "bottomText"));
+      }
+
+      function renderInnerWord(cardId) {
+        var card = cards[cardId];
+        var node = document.querySelector("[data-card=\"" + cardId + "\"] .inner-word");
+        if (!node || !card) return;
+        node.style.color = card.textColor || card.color;
       }
 
       function renderLogo(cardId) {
@@ -1627,6 +1841,8 @@
         slot.innerHTML = "";
         slot.classList.remove("is-editing");
         slot.classList.remove("is-move-enabled");
+        slot.classList.toggle("is-empty", card.type === "library" && !card.image);
+        slot.classList.toggle("has-image", !!card.image);
         var viewport = document.createElement("div");
         viewport.className = "logo-viewport";
         slot.appendChild(viewport);
@@ -1643,10 +1859,11 @@
           if (isSlotMoveEnabled(cardId, "logo")) {
             slot.classList.add("is-move-enabled");
           }
-        } else if (card.type !== "library") {
+        } else {
           var empty = document.createElement("span");
           empty.className = "slot-empty";
           empty.textContent = "logo area";
+          empty.setAttribute("aria-hidden", "true");
           viewport.appendChild(empty);
         }
       }
@@ -1661,13 +1878,21 @@
           if (card.type === "outer" || card.type === "resource" || card.type === "library" || card.type === "plain") {
             node.style.setProperty("--card-color", card.color);
           }
-          if (card.type === "inner") {
+          if (card.type === "inner" || card.type === "innerText") {
             node.style.background = card.color;
-            node.style.color = card.textColor || card.color;
+            if (card.type === "inner") {
+              node.style.color = card.textColor || card.color;
+            } else {
+              node.style.color = "";
+              renderInnerWord(cardId);
+            }
           }
           if (card.type === "library") {
             renderFixedSlot(cardId, "group2");
             renderLogo(cardId);
+          } else if (card.type === "innerText") {
+            renderLogo(cardId);
+            renderInnerBottomText(cardId);
           } else {
             renderLogo(cardId);
           }
@@ -1680,7 +1905,9 @@
         var card = cards[selected];
         hexInput.value = card.color;
         colorInput.value = card.color;
-        textSettings.hidden = card.type !== "inner";
+        textSettings.hidden = !isInnerLikeCard(card);
+        bottomTextSettings.hidden = card.type !== "innerText";
+        logoFileField.hidden = false;
         sixsnsLogoField.hidden = card.type !== "outer";
         resourceLogoField.hidden = true;
         if (logoFileFieldTitle) {
@@ -1692,6 +1919,12 @@
         }
         textHexInput.value = card.textColor || card.color;
         textColorInput.value = card.textColor || card.color;
+        if (card.type === "innerText") {
+          bottomTextValue.value = card.bottomText || "ТЕКСТ";
+          bottomTextHexInput.value = getBottomTextColor(card);
+          bottomTextColorInput.value = getBottomTextColor(card);
+          bottomTextSizeValue.value = String(normalizeBottomTextSize(card.bottomTextSize, 72));
+        }
         fileName.textContent = card.fileName;
         renderLogoPreview();
         if (card.type === "outer") renderSixsnsLogoGrid();
@@ -1703,7 +1936,9 @@
         selected = cardId;
         if (activeSlotEdit && activeSlotEdit.cardId !== cardId) clearActiveSlotEdit();
         var card = cards[cardId];
-        if (card && card.image && (card.type === "library" || card.type === "plain")) {
+        if (card && card.type === "library") {
+          activeSlotEdit = { cardId: cardId, kind: "group2" };
+        } else if (card && card.image && card.type === "plain") {
           activeSlotEdit = { cardId: cardId, kind: "logo" };
         }
         renderInspector();
@@ -1780,12 +2015,43 @@
       }
 
       function setTextColor(value) {
-        if (!cards[selected] || cards[selected].type !== "inner") return;
+        if (!isInnerLikeCard(cards[selected])) return;
         var next = normalizeHex(value, cards[selected].textColor || cards[selected].color);
         if ((cards[selected].textColor || cards[selected].color) === next) return;
         cards[selected].textColor = next;
         textHexInput.value = next;
         textColorInput.value = next;
+        renderCards();
+        markDirty();
+      }
+
+      function setBottomText(value) {
+        if (!cards[selected] || cards[selected].type !== "innerText") return;
+        var next = String(value || "").trim() || "ТЕКСТ";
+        if (cards[selected].bottomText === next) return;
+        cards[selected].bottomText = next;
+        bottomTextValue.value = next;
+        renderCards();
+        markDirty();
+      }
+
+      function setBottomTextSize(value) {
+        if (!cards[selected] || cards[selected].type !== "innerText") return;
+        var next = normalizeBottomTextSize(value, cards[selected].bottomTextSize || 72);
+        if (normalizeBottomTextSize(cards[selected].bottomTextSize, 72) === next) return;
+        cards[selected].bottomTextSize = next;
+        bottomTextSizeValue.value = String(next);
+        renderCards();
+        markDirty();
+      }
+
+      function setBottomTextColor(value) {
+        if (!cards[selected] || cards[selected].type !== "innerText") return;
+        var next = normalizeHex(value, getBottomTextColor(cards[selected]));
+        if (getBottomTextColor(cards[selected]) === next) return;
+        cards[selected].bottomTextColor = next;
+        bottomTextHexInput.value = next;
+        bottomTextColorInput.value = next;
         renderCards();
         markDirty();
       }
@@ -1825,18 +2091,42 @@
         ctx.drawImage(image, x, y, width, height);
       }
 
-      function ensureMontserratLoaded() {
+      function ensureMontserratLoaded(extraSizes) {
         if (!document.fonts || !document.fonts.load) return Promise.resolve();
-        return document.fonts.load("600 220px Montserrat").catch(function () {
+        var sizes = [72];
+        if (Array.isArray(extraSizes)) {
+          extraSizes.forEach(function (size) {
+            var normalized = normalizeBottomTextSize(size, 0);
+            if (normalized && sizes.indexOf(normalized) < 0) sizes.push(normalized);
+          });
+        }
+        var loads = [document.fonts.load("600 220px Montserrat")];
+        sizes.forEach(function (size) {
+          loads.push(document.fonts.load("400 " + size + "px Montserrat"));
+        });
+        return Promise.all(loads).catch(function () {
           return undefined;
         });
+      }
+
+      function drawBottomText(ctx, card) {
+        var text = String(card.bottomText || "ТЕКСТ");
+        var size = normalizeBottomTextSize(card.bottomTextSize, 72);
+        var slotRect = getSlotRect(card, "bottomText");
+        ctx.fillStyle = getBottomTextColor(card);
+        ctx.font = "400 " + size + "px \"Montserrat\", Segoe UI, Arial, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, slotRect.x + slotRect.w / 2, slotRect.y + slotRect.h / 2);
       }
 
       async function renderSelectedCardPng() {
         var card = cards[selected];
         if (!card) return null;
 
-        await ensureMontserratLoaded();
+        await ensureMontserratLoaded(
+          card.type === "innerText" ? [card.bottomTextSize] : []
+        );
 
         var geometry = avatarGeometry[card.type];
         if (!geometry) return null;
@@ -1854,11 +2144,22 @@
           ctx.font = avatarGeometry.inner.textDraw.font;
           ctx.textAlign = "center";
           ctx.textBaseline = "top";
-          ctx.letterSpacing = "3px";
           ctx.fillText("INNER", avatarGeometry.inner.textDraw.x, avatarGeometry.inner.textDraw.y);
           if (card.image) {
             drawContain(ctx, await loadImage(card.image), getLogoSlotRect(card));
           }
+        } else if (card.type === "innerText") {
+          ctx.fillStyle = card.color;
+          ctx.fillRect(0, 0, geometry.size.width, geometry.size.height);
+          ctx.fillStyle = card.textColor || card.color;
+          ctx.font = avatarGeometry.innerText.textDraw.font;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "top";
+          ctx.fillText("INNER", avatarGeometry.innerText.textDraw.x, avatarGeometry.innerText.textDraw.y);
+          if (card.image) {
+            drawContain(ctx, await loadImage(card.image), getLogoSlotRect(card));
+          }
+          drawBottomText(ctx, card);
         } else if (card.type === "resource") {
           ctx.fillStyle = card.color;
           ctx.fillRect(0, 0, geometry.size.width, geometry.size.height);
@@ -1872,7 +2173,7 @@
         } else if (card.type === "library") {
           ctx.fillStyle = card.color;
           ctx.fillRect(0, 0, geometry.size.width, geometry.size.height);
-          drawContain(ctx, await loadImage(GROUP2_LOGO_EXPORT_SRC), avatarGeometry.library.group2Slot);
+          drawContain(ctx, await loadImage(GROUP2_LOGO_EXPORT_SRC), getSlotRect(card, "group2"));
           if (card.image) {
             drawContain(ctx, await loadImage(card.image), getLogoSlotRect(card));
           }
@@ -1935,11 +2236,16 @@
               name: card.name,
               color: card.color,
               textColor: card.textColor,
+              bottomText: card.bottomText,
+              bottomTextSize: card.bottomTextSize,
+              bottomTextColor: card.bottomTextColor,
               image: card.image,
               fileName: card.fileName,
               sixsnsLogo: card.sixsnsLogo,
               resourceLogo: card.resourceLogo,
               logoSlotAdjust: card.logoSlotAdjust || { x: 0, y: 0, w: 0, h: 0 },
+              bottomTextSlotAdjust: card.bottomTextSlotAdjust || { x: 0, y: 0, w: 0, h: 0 },
+              group2SlotAdjust: card.group2SlotAdjust || { x: 0, y: 0, w: 0, h: 0 },
               sixsnsSlotAdjust: card.sixsnsSlotAdjust || { x: 0, y: 0, w: 0, h: 0 },
               resourceSlotAdjust: card.resourceSlotAdjust || { x: 0, y: 0, w: 0, h: 0 },
               boardX: isBuiltinCard(card.id) ? undefined : Number(card.boardX) || 0,
@@ -1961,9 +2267,14 @@
               template: cards[cardId].template,
               color: cards[cardId].color,
               textColor: cards[cardId].textColor,
+              bottomText: cards[cardId].bottomText,
+              bottomTextSize: cards[cardId].bottomTextSize,
+              bottomTextColor: cards[cardId].bottomTextColor,
               fileName: cards[cardId].fileName,
               image: cards[cardId].image,
               logoSlotAdjust: cards[cardId].logoSlotAdjust || { x: 0, y: 0, w: 0, h: 0 },
+              bottomTextSlotAdjust: cards[cardId].bottomTextSlotAdjust || { x: 0, y: 0, w: 0, h: 0 },
+              group2SlotAdjust: cards[cardId].group2SlotAdjust || { x: 0, y: 0, w: 0, h: 0 },
               sixsnsSlotAdjust: cards[cardId].sixsnsSlotAdjust || { x: 0, y: 0, w: 0, h: 0 },
               resourceSlotAdjust: cards[cardId].resourceSlotAdjust || { x: 0, y: 0, w: 0, h: 0 },
               sixsnsLogo: cards[cardId].sixsnsLogo,
@@ -1993,68 +2304,26 @@
       }
 
       function ensureBuiltInCards() {
+        if (!cards["card-inner-text-1"]) {
+          cards["card-inner-text-1"] = JSON.parse(JSON.stringify(defaultBuiltinCards["card-inner-text-1"]));
+          if (!cardOrder.includes("card-inner-text-1")) {
+            cardOrder.splice(1, 0, "card-inner-text-1");
+          }
+        }
         if (!cards["card-resource-1"]) {
-          cards["card-resource-1"] = {
-            id: "card-resource-1",
-            type: "resource",
-            name: "Resource",
-            title: "Resource",
-            template: "logo + Resource",
-            color: "#f03238",
-            textColor: "#ffffff",
-            fileName: "не выбран",
-            image: "",
-            logoSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
-            sixsnsSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
-            resourceSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
-            sixsnsLogo: "primary-white",
-            resourceLogo: "resource",
-            metrics: {}
-          };
+          cards["card-resource-1"] = JSON.parse(JSON.stringify(defaultBuiltinCards["card-resource-1"]));
           if (!cardOrder.includes("card-resource-1")) {
             cardOrder.push("card-resource-1");
           }
         }
         if (!cards["card-library-1"]) {
-          cards["card-library-1"] = {
-            id: "card-library-1",
-            type: "library",
-            name: "Лого/картинка",
-            title: "Лого/картинка",
-            template: "logo",
-            color: "#ff9500",
-            textColor: "#ffffff",
-            fileName: "не выбран",
-            image: "",
-            logoSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
-            sixsnsSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
-            resourceSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
-            sixsnsLogo: "primary-white",
-            resourceLogo: "resource",
-            metrics: {}
-          };
+          cards["card-library-1"] = JSON.parse(JSON.stringify(defaultBuiltinCards["card-library-1"]));
           if (!cardOrder.includes("card-library-1")) {
             cardOrder.push("card-library-1");
           }
         }
         if (!cards["card-plain-1"]) {
-          cards["card-plain-1"] = {
-            id: "card-plain-1",
-            type: "plain",
-            name: "Лого_центр",
-            title: "Лого_центр",
-            template: "logo",
-            color: "#ffffff",
-            textColor: "#ffffff",
-            fileName: "не выбран",
-            image: "",
-            logoSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
-            sixsnsSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
-            resourceSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
-            sixsnsLogo: "primary-white",
-            resourceLogo: "resource",
-            metrics: {}
-          };
+          cards["card-plain-1"] = JSON.parse(JSON.stringify(defaultBuiltinCards["card-plain-1"]));
           if (!cardOrder.includes("card-plain-1")) {
             cardOrder.push("card-plain-1");
           }
@@ -2080,15 +2349,20 @@
           return false;
         }
 
-        var nextOrder = payload.cardOrder.filter(function (cardId) {
-          return payload.cards[cardId] && typeof payload.cards[cardId] === "object";
+        var nextCards = JSON.parse(JSON.stringify(defaultBuiltinCards));
+        var copyOrder = payload.cardOrder.filter(function (cardId) {
+          return payload.cards[cardId] && typeof payload.cards[cardId] === "object" && !isBuiltinCard(cardId);
         });
-        if (!nextOrder.length) return false;
-
-        var nextCards = {};
+        var nextOrder = BUILTIN_CARD_IDS.slice();
+        copyOrder.forEach(function (cardId) {
+          if (payload.cards[cardId] && typeof payload.cards[cardId] === "object") {
+            nextOrder.push(cardId);
+          }
+        });
         nextOrder.forEach(function (cardId) {
+          if (isBuiltinCard(cardId)) return;
           var saved = payload.cards[cardId];
-          var type = saved.type === "outer" || saved.type === "resource" || saved.type === "library" || saved.type === "plain"
+          var type = saved.type === "outer" || saved.type === "resource" || saved.type === "library" || saved.type === "plain" || saved.type === "innerText"
             ? saved.type
             : "inner";
           nextCards[cardId] = {
@@ -2098,7 +2372,13 @@
             title: String(saved.title || ""),
             template: String(saved.template || ""),
             color: normalizeHex(saved.color, getDefaultCardColor(type)),
-            textColor: normalizeHex(saved.textColor, type === "inner" ? "#F03238" : "#FFFFFF"),
+            textColor: normalizeHex(saved.textColor, type === "inner" || type === "innerText" ? "#F03238" : "#FFFFFF"),
+            bottomText: typeof saved.bottomText === "string" ? saved.bottomText : "ТЕКСТ",
+            bottomTextSize: normalizeBottomTextSize(saved.bottomTextSize, 72),
+            bottomTextColor: normalizeHex(
+              saved.bottomTextColor,
+              normalizeHex(saved.textColor, type === "innerText" ? "#F03238" : "#FFFFFF")
+            ),
             fileName: typeof saved.fileName === "string" ? saved.fileName : "не выбран",
             image: typeof saved.image === "string" ? saved.image : "",
             logoSlotAdjust: {
@@ -2106,6 +2386,18 @@
               y: Number(saved.logoSlotAdjust && saved.logoSlotAdjust.y) || 0,
               w: Number(saved.logoSlotAdjust && saved.logoSlotAdjust.w) || 0,
               h: Number(saved.logoSlotAdjust && saved.logoSlotAdjust.h) || 0
+            },
+            bottomTextSlotAdjust: {
+              x: Number(saved.bottomTextSlotAdjust && saved.bottomTextSlotAdjust.x) || 0,
+              y: Number(saved.bottomTextSlotAdjust && saved.bottomTextSlotAdjust.y) || 0,
+              w: 0,
+              h: 0
+            },
+            group2SlotAdjust: {
+              x: Number(saved.group2SlotAdjust && saved.group2SlotAdjust.x) || 0,
+              y: Number(saved.group2SlotAdjust && saved.group2SlotAdjust.y) || 0,
+              w: Number(saved.group2SlotAdjust && saved.group2SlotAdjust.w) || 0,
+              h: Number(saved.group2SlotAdjust && saved.group2SlotAdjust.h) || 0
             },
             sixsnsSlotAdjust: {
               x: Number(saved.sixsnsSlotAdjust && saved.sixsnsSlotAdjust.x) || 0,
@@ -2134,7 +2426,7 @@
         cardOrder = nextOrder;
         selected = cards[payload.selected] ? payload.selected : nextOrder[0];
         activeSlotEdit = null;
-        cardCounter = Math.max(Number(payload.cardCounter) || 0, nextOrder.length, 5);
+        cardCounter = Math.max(Number(payload.cardCounter) || 0, nextOrder.length, 6);
         return true;
       }
 
@@ -2302,14 +2594,22 @@
           var slotKind = editableSlot.dataset.slotKind;
           var slotCard = cards[slotCardId];
           selectCard(slotCardId);
-          if (slotKind === "logo" && slotCard && slotCard.image && event.detail >= 2) {
-            activeSlotEdit = { cardId: slotCardId, kind: slotKind };
-            moveSlotEdit = { cardId: slotCardId, kind: slotKind };
+          if (slotKind === "logo" && slotCard && slotCard.image) {
+            activateMovableSlot(slotCardId, slotKind);
           } else if (slotKind === "logo" && (!slotCard || !slotCard.image)) {
-            clearActiveSlotEdit();
-          } else {
+            if (slotCard && slotCard.type === "library") {
+              activeSlotEdit = { cardId: slotCardId, kind: "group2" };
+              moveSlotEdit = null;
+            } else {
+              clearActiveSlotEdit();
+            }
+          } else if (slotKind === "group2" || slotKind === "bottomText") {
+            activateMovableSlot(slotCardId, slotKind);
+          } else if (!isFixedBrandSlot(slotKind)) {
             activeSlotEdit = { cardId: slotCardId, kind: slotKind };
             moveSlotEdit = null;
+          } else {
+            clearActiveSlotEdit();
           }
           renderCards();
           event.stopPropagation();
@@ -2323,14 +2623,19 @@
       });
 
       workArea.addEventListener("dblclick", function (event) {
-        var editableSlot = event.target.closest(".logo-slot[data-slot-kind=\"logo\"]");
+        var editableSlot = event.target.closest(".logo-slot[data-slot-kind=\"logo\"], .fixed-slot[data-slot-kind=\"group2\"]");
         if (!editableSlot) return;
         var slotCardId = editableSlot.dataset.slot;
+        var slotKind = editableSlot.dataset.slotKind;
         var card = cards[slotCardId];
-        if (!card || !card.image) return;
+        if (!card) return;
+        if (slotKind === "logo" && !card.image) {
+          if (card.type !== "library") return;
+          slotKind = "group2";
+        }
         selectCard(slotCardId);
-        activeSlotEdit = { cardId: slotCardId, kind: "logo" };
-        moveSlotEdit = { cardId: slotCardId, kind: "logo" };
+        activeSlotEdit = { cardId: slotCardId, kind: slotKind };
+        moveSlotEdit = { cardId: slotCardId, kind: slotKind };
         renderCards();
         event.preventDefault();
         event.stopPropagation();
@@ -2367,17 +2672,40 @@
           return;
         }
         var handle = event.target.closest("[data-logo-handle]");
-        var slot = handle ? handle.closest("[data-slot-kind]") : event.target.closest(".logo-slot[data-slot-kind=\"logo\"]");
+        var slot = handle
+          ? handle.closest("[data-slot-kind]")
+          : (event.target.closest(".logo-slot[data-slot-kind=\"logo\"]") ||
+            event.target.closest(".fixed-slot[data-slot-kind=\"group2\"]") ||
+            event.target.closest(".inner-bottom-text[data-slot-kind=\"bottomText\"]"));
         if (!slot) return;
         var cardId = slot.dataset.slot;
         var slotKind = slot.dataset.slotKind;
         var card = cards[cardId];
         if (!card) return;
-        if (slotKind === "logo" && !card.image) return;
-        if (!handle && slotKind === "logo" && event.detail >= 2) {
+        if (isFixedBrandSlot(slotKind)) return;
+        if (slotKind === "logo" && !card.image) {
+          if (card.type !== "library") return;
+          slot = event.target.closest(".fixed-slot[data-slot-kind=\"group2\"][data-slot=\"" + cardId + "\"]");
+          if (!slot) return;
+          slotKind = "group2";
+        }
+        if (!handle && slotKind === "logo" && card.image && !isSlotMoveEnabled(cardId, slotKind)) {
           selectCard(cardId);
-          activeSlotEdit = { cardId: cardId, kind: slotKind };
-          moveSlotEdit = { cardId: cardId, kind: slotKind };
+          activateMovableSlot(cardId, slotKind);
+          renderCards();
+          slot = document.querySelector(".logo-slot[data-slot=\"" + cardId + "\"][data-slot-kind=\"logo\"]") || slot;
+        }
+        if (!handle && slotKind === "group2" && !isSlotMoveEnabled(cardId, slotKind)) {
+          selectCard(cardId);
+          activateMovableSlot(cardId, slotKind);
+          renderCards();
+          slot = document.querySelector(".fixed-slot[data-slot=\"" + cardId + "\"][data-slot-kind=\"group2\"]") || slot;
+        }
+        if (!handle && slotKind === "bottomText" && !isSlotMoveEnabled(cardId, slotKind)) {
+          selectCard(cardId);
+          activateMovableSlot(cardId, slotKind);
+          renderCards();
+          slot = document.querySelector(".inner-bottom-text[data-slot=\"" + cardId + "\"][data-slot-kind=\"bottomText\"]") || slot;
         }
         if (!handle && !isSlotMoveEnabled(cardId, slotKind)) return;
         var slotRect = getSlotRect(card, slotKind);
@@ -2421,7 +2749,7 @@
         if (slotEditState.mode === "move") {
           nextRect.x += dx;
           nextRect.y += dy;
-        } else if (slotEditState.mode === "resize") {
+        } else if (slotEditState.mode === "resize" && slotEditState.slotKind !== "bottomText") {
           var factor = 1 + (dx + dy) / 260;
           nextRect.w = slotEditState.startRect.w * factor;
           nextRect.h = slotEditState.startRect.h * factor;
@@ -2513,6 +2841,34 @@
 
       textColorInput.addEventListener("input", function () {
         setTextColor(textColorInput.value);
+      });
+
+      bottomTextValue.addEventListener("input", function () {
+        setBottomText(bottomTextValue.value);
+      });
+
+      bottomTextSizeValue.addEventListener("input", function () {
+        setBottomTextSize(bottomTextSizeValue.value);
+      });
+
+      bottomTextSizeValue.addEventListener("change", function () {
+        setBottomTextSize(bottomTextSizeValue.value);
+      });
+
+      bottomTextHexInput.addEventListener("input", function () {
+        if (isHexColor(bottomTextHexInput.value)) setBottomTextColor(bottomTextHexInput.value);
+      });
+
+      bottomTextHexInput.addEventListener("change", function () {
+        if (isHexColor(bottomTextHexInput.value)) {
+          setBottomTextColor(bottomTextHexInput.value);
+        } else {
+          bottomTextHexInput.value = getBottomTextColor(cards[selected]);
+        }
+      });
+
+      bottomTextColorInput.addEventListener("input", function () {
+        setBottomTextColor(bottomTextColorInput.value);
       });
 
 
