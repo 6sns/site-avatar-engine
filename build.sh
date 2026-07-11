@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SRC_DIR="$(cd "$ROOT_DIR/../avatar-engine-inline" && pwd)"
+SRC_DIR="$(cd "$ROOT_DIR/../source" && pwd)"
 
 test -f "$SRC_DIR/index.html"
 test -d "$SRC_DIR/assets/fixed"
@@ -23,4 +23,4 @@ fi
 
 touch "$ROOT_DIR/.nojekyll"
 
-echo "Built publish-github/ from avatar-engine-inline"
+echo "Built publish-github/ from source"
