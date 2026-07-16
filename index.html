@@ -351,6 +351,13 @@
       font-size: 12px;
     }
 
+    .text-control {
+      min-height: 96px;
+      padding: 9px 11px;
+      line-height: 1.5;
+      resize: vertical;
+    }
+
     .file-control {
       min-height: 36px;
       display: grid;
@@ -783,6 +790,7 @@
       line-height: 1.1;
       letter-spacing: 0;
       overflow: hidden;
+      white-space: pre-wrap;
       word-break: break-word;
       cursor: pointer;
       z-index: 2;
@@ -1085,7 +1093,7 @@
 
         <div class="field text-settings" id="bottomTextSettings" hidden>
           <label for="bottomTextValue">Текст снизу</label>
-          <input class="control" id="bottomTextValue" type="text" spellcheck="false">
+          <textarea class="control text-control" id="bottomTextValue" rows="5" spellcheck="false" placeholder="Вставить текст"></textarea>
           <label for="bottomTextHexInput">Цвет текста</label>
           <div class="color-row">
             <input class="control" id="bottomTextHexInput" type="text" spellcheck="false" aria-label="Цвет текста снизу">
@@ -1813,7 +1821,7 @@
         node.style.top = slotRect.y + "px";
         node.style.width = slotRect.w + "px";
         node.style.height = slotRect.h + "px";
-        node.textContent = card.bottomText || "ТЕКСТ";
+        node.textContent = typeof card.bottomText === "string" ? card.bottomText : "";
         node.style.fontSize = normalizeBottomTextSize(card.bottomTextSize, 72) + "px";
         node.style.color = getBottomTextColor(card);
         node.classList.toggle("is-move-enabled", isSlotMoveEnabled(cardId, "bottomText"));
@@ -1920,7 +1928,7 @@
         textHexInput.value = card.textColor || card.color;
         textColorInput.value = card.textColor || card.color;
         if (card.type === "innerText") {
-          bottomTextValue.value = card.bottomText || "ТЕКСТ";
+          bottomTextValue.value = typeof card.bottomText === "string" ? card.bottomText : "";
           bottomTextHexInput.value = getBottomTextColor(card);
           bottomTextColorInput.value = getBottomTextColor(card);
           bottomTextSizeValue.value = String(normalizeBottomTextSize(card.bottomTextSize, 72));
@@ -2027,7 +2035,7 @@
 
       function setBottomText(value) {
         if (!cards[selected] || cards[selected].type !== "innerText") return;
-        var next = String(value || "").trim() || "ТЕКСТ";
+        var next = String(value || "");
         if (cards[selected].bottomText === next) return;
         cards[selected].bottomText = next;
         bottomTextValue.value = next;
@@ -2109,15 +2117,45 @@
         });
       }
 
+      function wrapCanvasText(ctx, text, maxWidth) {
+        return String(text || "").split(/\r?\n/).reduce(function (lines, paragraph) {
+          var words = paragraph.split(/\s+/).filter(Boolean);
+          if (!words.length) {
+            lines.push("");
+            return lines;
+          }
+          var line = "";
+          words.forEach(function (word) {
+            var testLine = line ? line + " " + word : word;
+            if (ctx.measureText(testLine).width <= maxWidth || !line) {
+              line = testLine;
+            } else {
+              lines.push(line);
+              line = word;
+            }
+          });
+          lines.push(line);
+          return lines;
+        }, []);
+      }
+
       function drawBottomText(ctx, card) {
-        var text = String(card.bottomText || "ТЕКСТ");
+        var text = typeof card.bottomText === "string" ? card.bottomText : "";
+        if (!text) return;
         var size = normalizeBottomTextSize(card.bottomTextSize, 72);
         var slotRect = getSlotRect(card, "bottomText");
+        var paddingX = 24;
+        var lineHeight = size * 1.1;
+        var maxLines = Math.max(1, Math.floor(slotRect.h / lineHeight));
         ctx.fillStyle = getBottomTextColor(card);
         ctx.font = "400 " + size + "px \"Montserrat\", Segoe UI, Arial, sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(text, slotRect.x + slotRect.w / 2, slotRect.y + slotRect.h / 2);
+        var lines = wrapCanvasText(ctx, text, Math.max(1, slotRect.w - paddingX * 2)).slice(0, maxLines);
+        var startY = slotRect.y + slotRect.h / 2 - ((lines.length - 1) * lineHeight) / 2;
+        lines.forEach(function (line, index) {
+          ctx.fillText(line, slotRect.x + slotRect.w / 2, startY + index * lineHeight);
+        });
       }
 
       async function renderSelectedCardPng() {
