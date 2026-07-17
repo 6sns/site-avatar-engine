@@ -1084,6 +1084,8 @@
         <div class="field text-settings" id="textSettings">
           <label for="innerTextValue">Текст INNER</label>
           <input class="control" id="innerTextValue" type="text" value="INNER" spellcheck="false" placeholder="Ввести текст">
+          <label for="innerTextSizeValue">Размер шрифта</label>
+          <input class="control" id="innerTextSizeValue" type="number" min="40" max="320" step="1">
           <label for="textHexInput">Цвет INNER</label>
           <div class="color-row">
             <input class="control" id="textHexInput" type="text" spellcheck="false" aria-label="Цвет INNER">
@@ -1251,6 +1253,7 @@
           color: "#ffffff",
           textColor: "#f03238",
           innerText: "INNER",
+          innerTextSize: 220,
           fileName: "не выбран",
           image: "",
           logoSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
@@ -1270,6 +1273,7 @@
           color: "#ffffff",
           textColor: "#f03238",
           innerText: "INNER",
+          innerTextSize: 220,
           bottomText: "ТЕКСТ",
           bottomTextSize: 72,
           bottomTextColor: "#f03238",
@@ -1369,6 +1373,7 @@
       var bottomTextSettings = document.getElementById("bottomTextSettings");
       var bottomTextValue = document.getElementById("bottomTextValue");
       var bottomTextSizeValue = document.getElementById("bottomTextSizeValue");
+      var innerTextSizeValue = document.getElementById("innerTextSizeValue");
       var bottomTextHexInput = document.getElementById("bottomTextHexInput");
       var bottomTextColorInput = document.getElementById("bottomTextColorInput");
       var textHexInput = document.getElementById("textHexInput");
@@ -1446,10 +1451,22 @@
         return String(value || "").toLocaleUpperCase("ru-RU");
       }
 
+      function normalizeInnerTextSize(value, fallback) {
+        var size = Number(value);
+        if (!Number.isFinite(size)) size = Number(fallback) || 220;
+        return Math.max(40, Math.min(320, Math.round(size)));
+      }
+
       function getInnerTextForRender(cardId, card) {
         if (!card || !isInnerLikeCard(card)) return "";
         if (isBuiltinCard(cardId)) return "INNER";
         return typeof card.innerText === "string" ? card.innerText : "INNER";
+      }
+
+      function getInnerTextSizeForRender(cardId, card) {
+        if (!card || !isInnerLikeCard(card)) return 220;
+        if (isBuiltinCard(cardId)) return 220;
+        return normalizeInnerTextSize(card.innerTextSize, 220);
       }
 
       function isFixedBrandSlot(kind) {
@@ -1845,6 +1862,7 @@
         if (!node || !card) return;
         node.textContent = getInnerTextForRender(cardId, card);
         node.style.color = card.textColor || card.color;
+        node.style.fontSize = getInnerTextSizeForRender(cardId, card) + "px";
       }
 
       function renderLogo(cardId) {
@@ -1943,6 +1961,8 @@
         textColorInput.value = card.textColor || card.color;
         innerTextValue.value = getInnerTextForRender(selected, card);
         innerTextValue.readOnly = isBuiltinCard(selected);
+        innerTextSizeValue.value = String(getInnerTextSizeForRender(selected, card));
+        innerTextSizeValue.readOnly = isBuiltinCard(selected);
         if (card.type === "innerText") {
           bottomTextValue.value = typeof card.bottomText === "string" ? card.bottomText : "";
           bottomTextHexInput.value = getBottomTextColor(card);
@@ -2004,6 +2024,7 @@
         copy.name = source.name + "_copy";
         if (isInnerLikeCard(copy)) {
           copy.innerText = getInnerTextForRender(cardId, source);
+          copy.innerTextSize = getInnerTextSizeForRender(cardId, source);
         }
         var boardPos = getDefaultCopyBoardPosition();
         copy.boardX = boardPos.x;
@@ -2062,6 +2083,20 @@
         if ((cards[selected].innerText || "") === next) return;
         cards[selected].innerText = next;
         innerTextValue.value = next;
+        renderCards();
+        markDirty();
+      }
+
+      function setInnerTextSize(value) {
+        if (!isInnerLikeCard(cards[selected])) return;
+        if (isBuiltinCard(selected)) {
+          innerTextSizeValue.value = String(getInnerTextSizeForRender(selected, cards[selected]));
+          return;
+        }
+        var next = normalizeInnerTextSize(value, cards[selected].innerTextSize || 220);
+        if (normalizeInnerTextSize(cards[selected].innerTextSize, 220) === next) return;
+        cards[selected].innerTextSize = next;
+        innerTextSizeValue.value = String(next);
         renderCards();
         markDirty();
       }
@@ -2137,7 +2172,9 @@
         var sizes = [72];
         if (Array.isArray(extraSizes)) {
           extraSizes.forEach(function (size) {
-            var normalized = normalizeBottomTextSize(size, 0);
+            var normalized = Number(size);
+            if (!Number.isFinite(normalized)) normalized = 0;
+            normalized = Math.max(1, Math.round(normalized));
             if (normalized && sizes.indexOf(normalized) < 0) sizes.push(normalized);
           });
         }
@@ -2196,7 +2233,9 @@
         if (!card) return null;
 
         await ensureMontserratLoaded(
-          card.type === "innerText" ? [card.bottomTextSize] : []
+          isInnerLikeCard(card)
+            ? [getInnerTextSizeForRender(selected, card)].concat(card.type === "innerText" ? [card.bottomTextSize] : [])
+            : []
         );
 
         var geometry = avatarGeometry[card.type];
@@ -2212,7 +2251,7 @@
           ctx.fillStyle = card.color;
           ctx.fillRect(0, 0, geometry.size.width, geometry.size.height);
           ctx.fillStyle = card.textColor || card.color;
-          ctx.font = avatarGeometry.inner.textDraw.font;
+          ctx.font = "600 " + getInnerTextSizeForRender(selected, card) + "px \"Montserrat\", Segoe UI, Arial, sans-serif";
           ctx.textAlign = "center";
           ctx.textBaseline = "top";
           ctx.fillText(getInnerTextForRender(selected, card), avatarGeometry.inner.textDraw.x, avatarGeometry.inner.textDraw.y);
@@ -2223,7 +2262,7 @@
           ctx.fillStyle = card.color;
           ctx.fillRect(0, 0, geometry.size.width, geometry.size.height);
           ctx.fillStyle = card.textColor || card.color;
-          ctx.font = avatarGeometry.innerText.textDraw.font;
+          ctx.font = "600 " + getInnerTextSizeForRender(selected, card) + "px \"Montserrat\", Segoe UI, Arial, sans-serif";
           ctx.textAlign = "center";
           ctx.textBaseline = "top";
           ctx.fillText(getInnerTextForRender(selected, card), avatarGeometry.innerText.textDraw.x, avatarGeometry.innerText.textDraw.y);
@@ -2308,6 +2347,7 @@
               color: card.color,
               textColor: card.textColor,
               innerText: card.innerText,
+              innerTextSize: card.innerTextSize,
               bottomText: card.bottomText,
               bottomTextSize: card.bottomTextSize,
               bottomTextColor: card.bottomTextColor,
@@ -2340,6 +2380,7 @@
               color: cards[cardId].color,
               textColor: cards[cardId].textColor,
               innerText: cards[cardId].innerText,
+              innerTextSize: cards[cardId].innerTextSize,
               bottomText: cards[cardId].bottomText,
               bottomTextSize: cards[cardId].bottomTextSize,
               bottomTextColor: cards[cardId].bottomTextColor,
@@ -2447,6 +2488,7 @@
             color: normalizeHex(saved.color, getDefaultCardColor(type)),
             textColor: normalizeHex(saved.textColor, type === "inner" || type === "innerText" ? "#F03238" : "#FFFFFF"),
             innerText: typeof saved.innerText === "string" ? saved.innerText : "INNER",
+            innerTextSize: normalizeInnerTextSize(saved.innerTextSize, 220),
             bottomText: typeof saved.bottomText === "string" ? saved.bottomText : "ТЕКСТ",
             bottomTextSize: normalizeBottomTextSize(saved.bottomTextSize, 72),
             bottomTextColor: normalizeHex(
@@ -2903,6 +2945,14 @@
 
       innerTextValue.addEventListener("input", function () {
         setInnerText(innerTextValue.value);
+      });
+
+      innerTextSizeValue.addEventListener("input", function () {
+        setInnerTextSize(innerTextSizeValue.value);
+      });
+
+      innerTextSizeValue.addEventListener("change", function () {
+        setInnerTextSize(innerTextSizeValue.value);
       });
 
       textHexInput.addEventListener("input", function () {
