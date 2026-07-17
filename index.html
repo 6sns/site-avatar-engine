@@ -1083,7 +1083,7 @@
 
         <div class="field text-settings" id="textSettings">
           <label for="innerTextValue">Текст INNER</label>
-          <input class="control" id="innerTextValue" type="text" value="INNER" readonly>
+          <input class="control" id="innerTextValue" type="text" value="INNER" spellcheck="false" placeholder="Ввести текст">
           <label for="textHexInput">Цвет INNER</label>
           <div class="color-row">
             <input class="control" id="textHexInput" type="text" spellcheck="false" aria-label="Цвет INNER">
@@ -1250,6 +1250,7 @@
           template: "INNER + logo",
           color: "#ffffff",
           textColor: "#f03238",
+          innerText: "INNER",
           fileName: "не выбран",
           image: "",
           logoSlotAdjust: { x: 0, y: 0, w: 0, h: 0 },
@@ -1268,6 +1269,7 @@
           template: "INNER + logo + текст",
           color: "#ffffff",
           textColor: "#f03238",
+          innerText: "INNER",
           bottomText: "ТЕКСТ",
           bottomTextSize: 72,
           bottomTextColor: "#f03238",
@@ -1440,6 +1442,16 @@
         return BUILTIN_CARD_IDS.indexOf(cardId) >= 0;
       }
 
+      function normalizeInnerText(value) {
+        return String(value || "").toLocaleUpperCase("ru-RU");
+      }
+
+      function getInnerTextForRender(cardId, card) {
+        if (!card || !isInnerLikeCard(card)) return "";
+        if (isBuiltinCard(cardId)) return "INNER";
+        return typeof card.innerText === "string" ? card.innerText : "INNER";
+      }
+
       function isFixedBrandSlot(kind) {
         return kind === "sixsns" || kind === "resource";
       }
@@ -1542,13 +1554,13 @@
           : "";
         if (card.type === "inner") {
           body = [
-            "<div class=\"inner-word\">INNER</div>",
+            "<div class=\"inner-word\" data-inner-word=\"" + card.id + "\">" + escapeHtml(getInnerTextForRender(card.id, card)) + "</div>",
             "<div class=\"logo-slot\" data-slot=\"" + card.id + "\" data-slot-kind=\"logo\"></div>",
             "<div class=\"fixed-note\">fixed: inner</div>"
           ].join("");
         } else if (card.type === "innerText") {
           body = [
-            "<div class=\"inner-word\">INNER</div>",
+            "<div class=\"inner-word\" data-inner-word=\"" + card.id + "\">" + escapeHtml(getInnerTextForRender(card.id, card)) + "</div>",
             "<div class=\"logo-slot\" data-slot=\"" + card.id + "\" data-slot-kind=\"logo\"></div>",
             "<div class=\"inner-bottom-text\" data-slot=\"" + card.id + "\" data-slot-kind=\"bottomText\" data-inner-bottom-text=\"" + card.id + "\"></div>",
             "<div class=\"fixed-note\">inner + logo + текст</div>"
@@ -1829,8 +1841,9 @@
 
       function renderInnerWord(cardId) {
         var card = cards[cardId];
-        var node = document.querySelector("[data-card=\"" + cardId + "\"] .inner-word");
+        var node = document.querySelector("[data-inner-word=\"" + cardId + "\"]");
         if (!node || !card) return;
+        node.textContent = getInnerTextForRender(cardId, card);
         node.style.color = card.textColor || card.color;
       }
 
@@ -1890,6 +1903,7 @@
             node.style.background = card.color;
             if (card.type === "inner") {
               node.style.color = card.textColor || card.color;
+              renderInnerWord(cardId);
             } else {
               node.style.color = "";
               renderInnerWord(cardId);
@@ -1927,6 +1941,8 @@
         }
         textHexInput.value = card.textColor || card.color;
         textColorInput.value = card.textColor || card.color;
+        innerTextValue.value = getInnerTextForRender(selected, card);
+        innerTextValue.readOnly = isBuiltinCard(selected);
         if (card.type === "innerText") {
           bottomTextValue.value = typeof card.bottomText === "string" ? card.bottomText : "";
           bottomTextHexInput.value = getBottomTextColor(card);
@@ -1986,6 +2002,9 @@
         var copy = JSON.parse(JSON.stringify(source));
         copy.id = copyId;
         copy.name = source.name + "_copy";
+        if (isInnerLikeCard(copy)) {
+          copy.innerText = getInnerTextForRender(cardId, source);
+        }
         var boardPos = getDefaultCopyBoardPosition();
         copy.boardX = boardPos.x;
         copy.boardY = boardPos.y;
@@ -2029,6 +2048,20 @@
         cards[selected].textColor = next;
         textHexInput.value = next;
         textColorInput.value = next;
+        renderCards();
+        markDirty();
+      }
+
+      function setInnerText(value) {
+        if (!isInnerLikeCard(cards[selected])) return;
+        if (isBuiltinCard(selected)) {
+          innerTextValue.value = getInnerTextForRender(selected, cards[selected]);
+          return;
+        }
+        var next = normalizeInnerText(value);
+        if ((cards[selected].innerText || "") === next) return;
+        cards[selected].innerText = next;
+        innerTextValue.value = next;
         renderCards();
         markDirty();
       }
@@ -2182,7 +2215,7 @@
           ctx.font = avatarGeometry.inner.textDraw.font;
           ctx.textAlign = "center";
           ctx.textBaseline = "top";
-          ctx.fillText("INNER", avatarGeometry.inner.textDraw.x, avatarGeometry.inner.textDraw.y);
+          ctx.fillText(getInnerTextForRender(selected, card), avatarGeometry.inner.textDraw.x, avatarGeometry.inner.textDraw.y);
           if (card.image) {
             drawContain(ctx, await loadImage(card.image), getLogoSlotRect(card));
           }
@@ -2193,7 +2226,7 @@
           ctx.font = avatarGeometry.innerText.textDraw.font;
           ctx.textAlign = "center";
           ctx.textBaseline = "top";
-          ctx.fillText("INNER", avatarGeometry.innerText.textDraw.x, avatarGeometry.innerText.textDraw.y);
+          ctx.fillText(getInnerTextForRender(selected, card), avatarGeometry.innerText.textDraw.x, avatarGeometry.innerText.textDraw.y);
           if (card.image) {
             drawContain(ctx, await loadImage(card.image), getLogoSlotRect(card));
           }
@@ -2274,6 +2307,7 @@
               name: card.name,
               color: card.color,
               textColor: card.textColor,
+              innerText: card.innerText,
               bottomText: card.bottomText,
               bottomTextSize: card.bottomTextSize,
               bottomTextColor: card.bottomTextColor,
@@ -2305,6 +2339,7 @@
               template: cards[cardId].template,
               color: cards[cardId].color,
               textColor: cards[cardId].textColor,
+              innerText: cards[cardId].innerText,
               bottomText: cards[cardId].bottomText,
               bottomTextSize: cards[cardId].bottomTextSize,
               bottomTextColor: cards[cardId].bottomTextColor,
@@ -2411,6 +2446,7 @@
             template: String(saved.template || ""),
             color: normalizeHex(saved.color, getDefaultCardColor(type)),
             textColor: normalizeHex(saved.textColor, type === "inner" || type === "innerText" ? "#F03238" : "#FFFFFF"),
+            innerText: typeof saved.innerText === "string" ? saved.innerText : "INNER",
             bottomText: typeof saved.bottomText === "string" ? saved.bottomText : "ТЕКСТ",
             bottomTextSize: normalizeBottomTextSize(saved.bottomTextSize, 72),
             bottomTextColor: normalizeHex(
@@ -2863,6 +2899,10 @@
 
       colorInput.addEventListener("input", function () {
         setColor(colorInput.value);
+      });
+
+      innerTextValue.addEventListener("input", function () {
+        setInnerText(innerTextValue.value);
       });
 
       textHexInput.addEventListener("input", function () {
